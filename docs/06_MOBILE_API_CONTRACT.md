@@ -86,13 +86,14 @@
 ```
 1. User taps "Sign in with Google" or "Sign in with Phone"
 2. Firebase SDK handles Google OAuth / Phone OTP → returns Firebase ID Token
-3. App calls: POST /api/v1/auth/login
+3. App calls any authenticated endpoint (e.g. GET /api/v1/auth/me)
    Headers: { Authorization: "Bearer <firebase-id-token>" }
-   Body: { "userType": "Seller" }  (only on first login)
-4. API validates token → creates/returns user
+4. API validates token → auto-creates user in DB on first request using Firebase profile (name, email, photo). **Default role: Seller**
 5. App stores Firebase ID token (SDK auto-refreshes ~every 1 hour)
 6. All subsequent API calls include: Authorization: Bearer <token>
 7. On 401 response → call user.getIdToken(true) to force refresh
+8. Optionally call POST /api/v1/auth/login with { "userType": "Agent" } to change user type
+9. User can also change role via PUT /api/v1/users/me with { "userType": "Agent" }
 ```
 
 ### Flutter Packages
@@ -105,10 +106,10 @@
 
 ### Authentication
 
-**POST** `/auth/login` — Login / Register
+**POST** `/auth/login` — Login / Update User Type
 ```
 Headers: Authorization: Bearer <firebase-id-token>
-Body: { "userType": "Seller" }  // Only on first login
+Body: { "userType": "Seller" }  // Optional — updates user type
 
 Response 200:
 {
@@ -128,6 +129,8 @@ Response 200:
 }
 ```
 
+> **Note:** User is auto-created by the middleware on first authenticated request. This endpoint is for retrieving the auth response and optionally updating `userType`.
+
 **GET** `/auth/me` — Get current user (Auth required)
 
 ---
@@ -135,12 +138,12 @@ Response 200:
 **POST** `/auth/phone-login` — Phone OTP Login
 ```
 Headers: Authorization: Bearer <firebase-phone-id-token>
-Body: { "userType": "Seller" }  // Only on first login
+Body: { "userType": "Seller" }  // Optional — updates user type
 
 Response: Same as /auth/login (same user object)
 ```
 
-> **Note:** Firebase Phone Auth produces the same type of ID token as Google Auth. The API middleware validates them identically. The only difference is client-side (Firebase SDK handles OTP flow).
+> **Note:** User is auto-created on first request. Firebase Phone Auth produces the same type of ID token as Google Auth. The API middleware validates them identically.
 
 **POST** `/auth/link-phone` — Link Phone to Existing Account (Auth required)
 ```
@@ -215,7 +218,7 @@ Response includes all fields from search PLUS:
 - seller: { full profile with ratings }
 ```
 
-**POST** `/listings` — Create Listing (Auth: Seller/Agent)
+**POST** `/listings` — Create Listing (Auth: Required)
 ```
 Body:
 {
@@ -233,7 +236,11 @@ Body:
   "areaName": "Kandirpar",
   "mouza": "কান্দিরপাড়",
   "latitude": 23.4607,
-  "longitude": 91.1809
+  "longitude": 91.1809,
+  "isOwner": true,              // default: true. Set false if listing as agent
+  "contactNumber": null,        // required when isOwner=false (agent's own number)
+  "ownerName": null,            // optional, for agent-posted listings
+  "ownerContactNumber": null    // optional, for agent-posted listings
 }
 
 Response 201: { "success": true, "data": { "id": "new-guid", ... } }
@@ -299,10 +306,16 @@ Response 201: Image metadata saved
 
 **PUT** `/users/me` — Update Own Profile (Auth required)
 ```
-Body: { "fullName": "Updated Name", "bio": "Property agent in Cumilla", "phoneNumber": "+8801712345678" }
+Body: {
+  "fullName": "Updated Name",
+  "bio": "Property agent in Cumilla",
+  "phoneNumber": "+8801712345678",
+  "userType": "Agent"           // optional — switch between "Seller" and "Agent"
+}
 ```
 
-**GET** `/users/{id}/listings?page=1&pageSize=20` — User's Listings
+**GET** `/users/{id}/listings?page=1&pageSize=20&isOwner=true` — User's Listings
+> Optional `isOwner` filter: `true` = listings as seller/owner, `false` = listings as agent. Omit for all.
 
 **GET** `/users/{id}/ratings` — User's Ratings
 
@@ -399,13 +412,13 @@ Body: { "listingId": "guid", "reason": "Fake", "comment": "This property doesn't
 | 2 | **Home** | Tab 1 | Public | Search bar, location quick-select, recent listings grid, "নতুন" badge |
 | 3 | **Search / Filter** | Tab 2 or from Home search | Public | Filter sheet (location/price/size), listing cards, sort, infinite scroll |
 | 4 | **Listing Detail** | Tap listing card | Public | Image carousel (swipe), all property data, mini map, seller card, WhatsApp button, share sheet, report |
-| 5 | **Create Listing** | Tab 3 (+ button) | Seller/Agent | Step 1: Details → Step 2: Location + Map Pin → Step 3: Photos (camera/gallery, up to 10) → Step 4: Preview & Publish |
-| 6 | **My Listings** | Tab 4 | Required | Listing cards with status badges, view counts, edit/delete swipe actions |
+| 5 | **Create Listing** | Tab 3 (+ button) | Required | Step 1: Details → Step 2: "Is Owner" toggle (if No: contact number field, optional owner name & contact) → Step 3: Location + Map Pin → Step 4: Photos (camera/gallery, up to 10) → Step 5: Preview & Publish |
+| 6 | **My Listings** | Tab 4 | Required | **Two tabs: "As Seller" and "As Agent"** (`?isOwner=true/false`). Listing cards with status badges, view counts, edit/delete swipe actions |
 | 7 | **Profile (Public)** | Tap seller name anywhere | Public | Photo, name, type, verified badge, rating stars, bio, listing grid |
-| 8 | **Edit Profile** | From Profile tab | Required | Name, phone, bio, profile photo |
+| 8 | **Edit Profile** | From Profile tab | Required | Name, phone, bio, **user type (Seller/Agent dropdown)**, profile photo |
 | 9 | **Login** | Redirect when auth needed | Public | Google sign-in + Phone OTP options, platform intro |
 | 10 | **Phone Login** | From Login screen | Public | Phone input (+880), OTP input (6 digits), countdown timer, resend button |
-| 11 | **Settings** | Tab 5 → gear icon | Public | Language toggle, about, contact, logout |
+| 11 | **Settings** | Tab 5 → gear icon | Public | Language toggle, about, contact, **profile picture dropdown** (Profile, My Listings, Logout) |
 
 ### 🟡 Phase 2 — Additional Screens
 

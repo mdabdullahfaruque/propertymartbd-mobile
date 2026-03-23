@@ -114,10 +114,11 @@ Endpoints returning collections use this extended envelope:
 ```
 1. User signs in via Google OAuth or Phone OTP using Firebase SDK
 2. Firebase SDK returns an ID Token (auto-refreshes ~every 1 hour)
-3. App calls POST /api/v1/auth/login with token in Authorization header
-4. API validates token server-side → creates or returns user
+3. App sends any request with: Authorization: Bearer <firebase-id-token>
+4. API middleware validates token → auto-creates user in DB on first request (using Firebase profile: name, email, photo)
 5. All subsequent requests include: Authorization: Bearer <firebase-id-token>
 6. On 401 → force token refresh via Firebase SDK, retry
+7. Optionally call POST /api/v1/auth/login with { "userType": "Seller" } to change user type
 ```
 
 ### Auth Levels
@@ -138,7 +139,9 @@ Endpoints returning collections use this extended envelope:
 All enums are serialized as **strings** in JSON (e.g., `"Land"`, not `0`).
 
 ### UserType
-`Seller` · `Agent` · `Buyer` · `Company` · `Admin`
+`Seller` (default) · `Agent` · `Buyer` · `Company` · `Admin`
+
+> New users are auto-created as **Seller** on first login. Users can switch to **Agent** via `PUT /users/me` or `POST /auth/login`.
 
 ### PropertyType
 `Land` · `Apartment` · `Flat` · `Shop` · `EmptySpace`
@@ -169,7 +172,7 @@ All enums are serialized as **strings** in JSON (e.g., `"Land"`, not `0`).
 
 ---
 
-#### `POST /auth/login` — Login / Register via Google
+#### `POST /auth/login` — Login / Update User Type via Google
 
 | | |
 |---|---|
@@ -186,7 +189,7 @@ Headers: Authorization: Bearer <firebase-google-id-token>
   "userType": "Seller"
 }
 ```
-> `userType` is optional — only used on first login to set user type. Accepted: `Seller`, `Buyer`, `Agent`.
+> `userType` is optional — updates the user's type if provided. Accepted: `Seller`, `Agent`. User is auto-created as **Seller** by middleware on first authenticated request.
 
 **Response 200:**
 ```json
@@ -210,7 +213,7 @@ Headers: Authorization: Bearer <firebase-google-id-token>
 
 ---
 
-#### `POST /auth/phone-login` — Login / Register via Phone OTP
+#### `POST /auth/phone-login` — Login / Update User Type via Phone OTP
 
 | | |
 |---|---|
@@ -227,7 +230,7 @@ Headers: Authorization: Bearer <firebase-phone-id-token>
   "userType": "Seller"
 }
 ```
-> Same behavior and response as `/auth/login`. Firebase Phone Auth produces the same type of ID token; the API validates them identically.
+> Same behavior and response as `/auth/login`. Firebase Phone Auth produces the same type of ID token; the API validates them identically. User is auto-created on first request.
 
 **Response 200:** Same as `/auth/login`.
 
@@ -447,7 +450,7 @@ GET /listings?divisionId=2&districtId=10&minPrice=500000&maxPrice=2000000&sortBy
 
 | | |
 |---|---|
-| **Auth** | Seller / Agent only |
+| **Auth** | Required (any authenticated user; default role is Seller) |
 | **Web Pages** | Create Listing |
 | **Mobile Screens** | Create Listing (Add tab) |
 
@@ -474,9 +477,22 @@ GET /listings?divisionId=2&districtId=10&minPrice=500000&maxPrice=2000000&sortBy
   "latitude": 23.4607,
   "longitude": 91.1809,
   "khatianNumber": "123",
-  "dagNumber": "456"
+  "dagNumber": "456",
+  "isOwner": true,
+  "contactNumber": null,
+  "ownerName": null,
+  "ownerContactNumber": null
 }
 ```
+
+**Owner / Agent Contact Fields:**
+
+| Field | Description |
+|-------|-------------|
+| `isOwner` | `true` (default) = user is the property owner. `false` = user is posting as an agent |
+| `contactNumber` | Agent's own contact number. **Required when `isOwner = false`**. Max 20 chars |
+| `ownerName` | Property owner's name. Optional. Max 200 chars |
+| `ownerContactNumber` | Property owner's phone. Optional. Max 20 chars |
 
 **Validation:**
 
@@ -490,6 +506,7 @@ GET /listings?divisionId=2&districtId=10&minPrice=500000&maxPrice=2000000&sortBy
 | `divisionId` | Required |
 | `districtId` | Required |
 | `upazilaId` | Required |
+| `contactNumber` | Required when `isOwner = false`, max 20 chars |
 
 **Response 201:**
 ```json
@@ -503,6 +520,10 @@ GET /listings?divisionId=2&districtId=10&minPrice=500000&maxPrice=2000000&sortBy
     "propertyType": "Land",
     "listingType": "Sale",
     "status": "Active",
+    "isOwner": true,
+    "contactNumber": null,
+    "ownerName": null,
+    "ownerContactNumber": null,
     ...
   }
 }
@@ -518,12 +539,14 @@ GET /listings?divisionId=2&districtId=10&minPrice=500000&maxPrice=2000000&sortBy
 | **Web Pages** | Edit Listing |
 | **Mobile Screens** | Edit Listing (from My Listings) |
 
-**Request:** Same fields as create — all optional (partial update). Only send fields you want to change.
+**Request:** Same fields as create — all optional (partial update). Only send fields you want to change. Includes `isOwner`, `contactNumber`, `ownerName`, `ownerContactNumber`.
 
 ```json
 {
   "price": 5500000,
-  "landSize": 6.0
+  "landSize": 6.0,
+  "isOwner": false,
+  "contactNumber": "+8801712345678"
 }
 ```
 
@@ -730,7 +753,8 @@ Content-Type: multipart/form-data
   "fullNameBn": "আপডেটেড নাম",
   "bio": "Property agent in Cumilla",
   "phoneNumber": "+8801712345678",
-  "preferredLanguage": "bn"
+  "preferredLanguage": "bn",
+  "userType": "Agent"
 }
 ```
 
@@ -743,6 +767,7 @@ Content-Type: multipart/form-data
 | `bio` | Max 1000 chars |
 | `phoneNumber` | Valid Bangladesh number (`+880XXXXXXXXXX`) |
 | `preferredLanguage` | `bn` or `en` |
+| `userType` | `Seller` or `Agent` |
 
 **Response 200:** Full `UserProfileResponse`.
 
@@ -758,12 +783,13 @@ Content-Type: multipart/form-data
 
 **Query Parameters:**
 
-| Parameter | Type | Default |
-|-----------|------|---------|
-| `page` | int | 1 |
-| `pageSize` | int | 20 |
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page` | int | 1 | Page number |
+| `pageSize` | int | 20 | Items per page (max 50) |
+| `isOwner` | bool? | null | Filter: `true` = listings as seller/owner, `false` = listings as agent. Omit for all. Used for "My Listings" tabs |
 
-**Response 200:** Paginated `ListingResponse[]` (same as search response format).
+**Response 200:** Paginated `ListingResponse[]` (same as search response format). Includes `isOwner`, `contactNumber`, `ownerName`, `ownerContactNumber` fields.
 
 ---
 
@@ -1040,7 +1066,7 @@ Content-Type: multipart/form-data
 | **Listing Detail** | `GET /listings/{id}`, `POST /ratings`, `POST /reports` |
 | **Create Listing** | `POST /listings`, `POST /uploads`, `POST /listings/{id}/images`, `GET /locations/*` |
 | **Edit Listing** | `PUT /listings/{id}`, `POST /uploads`, `POST /listings/{id}/images`, `DELETE /listings/{id}/images/{imageId}`, `PATCH /listings/{id}/images/reorder`, `GET /locations/*` |
-| **My Listings** | `GET /users/{id}/listings`, `DELETE /listings/{id}`, `PATCH /listings/{id}/status` |
+| **My Listings** | `GET /users/{id}/listings?isOwner=true\|false`, `DELETE /listings/{id}`, `PATCH /listings/{id}/status` |
 | **User Profile** | `GET /users/{id}`, `GET /users/{id}/listings`, `GET /users/{id}/ratings` |
 | **Edit Profile** | `PUT /users/me`, `POST /auth/link-phone` |
 | **Login** | `POST /auth/login` |
@@ -1055,7 +1081,7 @@ Content-Type: multipart/form-data
 | **Search** | `GET /listings`, `GET /locations/*` (all 3) |
 | **Listing Detail** | `GET /listings/{id}`, `POST /ratings`, `POST /reports` |
 | **Create Listing** | `POST /listings`, `POST /uploads`, `POST /listings/{id}/images`, `GET /locations/*` |
-| **My Listings** | `GET /users/{id}/listings`, `DELETE /listings/{id}`, `PATCH /listings/{id}/status` |
+| **My Listings** | `GET /users/{id}/listings?isOwner=true\|false`, `DELETE /listings/{id}`, `PATCH /listings/{id}/status` |
 | **Profile (Public)** | `GET /users/{id}`, `GET /users/{id}/listings`, `GET /users/{id}/ratings` |
 | **Edit Profile** | `PUT /users/me`, `POST /auth/link-phone` |
 | **Login** | `POST /auth/login` |
@@ -1067,8 +1093,8 @@ Content-Type: multipart/form-data
 | Auth Level | Endpoints |
 |------------|-----------|
 | **Public** | `GET /listings`, `GET /listings/{id}`, `GET /users/{id}`, `GET /users/{id}/listings`, `GET /users/{id}/ratings`, `GET /locations/*`, `POST /ratings` (P1), `POST /reports` |
-| **Required** | `POST /auth/login`, `POST /auth/phone-login`, `POST /auth/link-phone`, `GET /auth/me`, `PUT /users/me`, `POST /uploads` |
-| **Owner** | `POST /listings`, `PUT /listings/{id}`, `DELETE /listings/{id}`, `PATCH /listings/{id}/status`, `POST /listings/{id}/images`, `DELETE /listings/{id}/images/{imageId}`, `PATCH /listings/{id}/images/reorder` |
+| **Required** | `POST /auth/login`, `POST /auth/phone-login`, `POST /auth/link-phone`, `GET /auth/me`, `PUT /users/me`, `POST /uploads`, `POST /listings` |
+| **Owner** | `PUT /listings/{id}`, `DELETE /listings/{id}`, `PATCH /listings/{id}/status`, `POST /listings/{id}/images`, `DELETE /listings/{id}/images/{imageId}`, `PATCH /listings/{id}/images/reorder` |
 
 ---
 
