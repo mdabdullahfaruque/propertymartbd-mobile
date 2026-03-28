@@ -189,8 +189,8 @@ Response 200:
       "upazilaName": "Cumilla Sadar",
       "upazilaNameBn": "কুমিল্লা সদর",
       "areaName": "Kandirpar",
-      "primaryImageUrl": "https://files.domain.com/listing-image/guid/photo.jpg",
-      "thumbnailUrl": "https://files.domain.com/listing-image/guid/photo_thumb.jpg",
+      "primaryImageUrl": "https://api.propertymartbd.com/files/listing-images/guid/photo.jpg",
+      "thumbnailUrl": "https://api.propertymartbd.com/files/listing-images/guid/photo_thumb.jpg",
       "viewCount": 45,
       "createdAt": "2026-03-15T08:00:00Z",
       "seller": {
@@ -215,6 +215,8 @@ Response includes all fields from search PLUS:
 - fullAddress, fullAddressBn
 - images: [{ id, imageUrl, thumbnailUrl, displayOrder, isPrimary }]
 - contactCount, viewCount
+- isOwner, contactNumber (required when isOwner=false), ownerName, ownerContactNumber
+- primaryImageUrl, thumbnailUrl (root level, repeat for stability)
 - seller: { full profile with ratings }
 ```
 
@@ -412,8 +414,8 @@ Body: { "listingId": "guid", "reason": "Fake", "comment": "This property doesn't
 | 2 | **Home** | Tab 1 | Public | Search bar, location quick-select, recent listings grid, "নতুন" badge |
 | 3 | **Search / Filter** | Tab 2 or from Home search | Public | Filter sheet (location/price/size), listing cards, sort, infinite scroll |
 | 4 | **Listing Detail** | Tap listing card | Public | Image carousel (swipe), all property data, mini map, seller card, WhatsApp button, share sheet, report |
-| 5 | **Create Listing** | Tab 3 (+ button) | Required | Step 1: Details → Step 2: "Is Owner" toggle (if No: contact number field, optional owner name & contact) → Step 3: Location + Map Pin → Step 4: Photos (camera/gallery, up to 10) → Step 5: Preview & Publish |
-| 6 | **My Listings** | Tab 4 | Required | **Two tabs: "As Seller" and "As Agent"** (`?isOwner=true/false`). Listing cards with status badges, view counts, edit/delete swipe actions |
+| 5 | **Create Listing** | Tab 3 (+ button) | Required | Step 1: Details → Step 2: "Is Owner" toggle (if No: show fields for agent's contact number, property owner name, and owner contact number) → Step 3: Location + Map Pin → Step 4: Photos (camera/gallery, up to 10) → Step 5: Preview & Publish |
+| 6 | **My Listings** | Tab 4 | Required | **Two tabs: "As Seller" and "As Agent"** (`?isOwner=true/false`). Cards show `primaryImageUrl`, `thumbnailUrl`, and status badges. Swipe to edit/delete. |
 | 7 | **Profile (Public)** | Tap seller name anywhere | Public | Photo, name, type, verified badge, rating stars, bio, listing grid |
 | 8 | **Edit Profile** | From Profile tab | Required | Name, phone, bio, **user type (Seller/Agent dropdown)**, profile photo |
 | 9 | **Login** | Redirect when auth needed | Public | Google sign-in + Phone OTP options, platform intro |

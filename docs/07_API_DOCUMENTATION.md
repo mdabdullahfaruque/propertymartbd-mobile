@@ -351,6 +351,10 @@ GET /listings?divisionId=2&districtId=10&minPrice=500000&maxPrice=2000000&sortBy
       "thumbnailUrl": "https://api.propertymartbd.com/files/listing-images/2026/03/abc123-photo1_thumb.jpg",
       "viewCount": 45,
       "createdAt": "2026-03-15T08:00:00Z",
+      "isOwner": true,
+      "contactNumber": null,
+      "ownerName": null,
+      "ownerContactNumber": null,
       "seller": {
         "id": "guid",
         "fullName": "Ahmed Khan",
@@ -428,6 +432,10 @@ GET /listings?divisionId=2&districtId=10&minPrice=500000&maxPrice=2000000&sortBy
     "contactCount": 5,
     "createdAt": "2026-03-15T08:00:00Z",
     "updatedAt": "2026-03-18T12:00:00Z",
+    "isOwner": true,
+    "contactNumber": null,
+    "ownerName": null,
+    "ownerContactNumber": null,
     "seller": {
       "id": "guid",
       "fullName": "Ahmed Khan",
