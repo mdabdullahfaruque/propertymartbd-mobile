@@ -1,8 +1,9 @@
-# 🏠 Property Mart BD — API Documentation
+# 🏠 My Property Mart — API Documentation
 
-**Document Version:** 1.0  
+**Document Version:** 1.1  
 **Created:** March 22, 2026  
-**Status:** Phase 1 – Implemented  
+**Last Updated:** March 29, 2026  
+**Status:** Phase 1 – Complete, Phase 2 – Planning  
 **Source of Truth:** This document is the single reference for all API endpoints. Both `05_WEB_UI_GUIDE.md` (Angular) and `06_MOBILE_API_CONTRACT.md` (Flutter) reference this document.
 
 ---
@@ -21,10 +22,15 @@
   - [5.5 Ratings](#55-ratings)
   - [5.6 Locations](#56-locations)
   - [5.7 Reports](#57-reports)
-- [6. Phase 2 — Verification & Company](#6-phase-2--verification--company)
-- [7. Phase 3 — Favorites, Alerts & AI](#7-phase-3--favorites-alerts--ai)
-- [8. Phase 4 — Monetization & Marketplace](#8-phase-4--monetization--marketplace)
-- [9. Endpoint × Screen Matrix](#9-endpoint--screen-matrix)
+- [6. Phase 2A — Materials Marketplace, Wishlist & Malaysia](#6-phase-2a--materials-marketplace-wishlist--malaysia)
+  - [6.1 Materials](#61-materials)
+  - [6.2 Wishlist](#62-wishlist)
+  - [6.3 Malaysia Locations](#63-malaysia-locations)
+  - [6.4 Verification & Company](#64-verification--company)
+- [7. Phase 2B — Construction Company Portal](#7-phase-2b--construction-company-portal)
+- [8. Phase 3 — Alerts & AI](#8-phase-3--alerts--ai)
+- [9. Phase 4 — Monetization](#9-phase-4--monetization)
+- [10. Endpoint × Screen Matrix](#10-endpoint--screen-matrix)
 
 ---
 
@@ -33,14 +39,14 @@
 | Item | Value |
 |------|-------|
 | **Base URL (dev)** | `http://localhost:5000/api/v1` |
-| **Base URL (prod)** | `https://api.propertymartbd.com/api/v1` |
+| **Base URL (prod)** | `https://api.mypropertymart.com/api/v1` |
 | **Format** | JSON — `camelCase` properties, string enums, nulls omitted |
 | **Auth** | Firebase ID Token in `Authorization: Bearer <token>` header |
 | **Pagination** | `?page=1&pageSize=20` (max 50 per page) |
 | **Sorting** | `?sortBy=price&sortOrder=asc` |
 | **Dates** | ISO 8601 UTC — `2026-03-20T10:00:00Z` |
 | **IDs** | GUID (`550e8400-e29b-41d4-a716-446655440000`) for entities, `int` for locations |
-| **Swagger** | `https://api.propertymartbd.com/swagger` (dev only) |
+| **Swagger** | `https://api.mypropertymart.com/swagger` (dev only) |
 
 ### HTTP Status Codes
 
@@ -130,6 +136,9 @@ Endpoints returning collections use this extended envelope:
 | **Required** | Token required. Returns 401 without valid token. |
 | **Owner** | Token required + must own the resource. Returns 403 if not owner. |
 | **Seller/Agent** | Token required + `userType` must be `Seller` or `Agent`. Returns 403 otherwise. |
+| **Dealer** | Token required + `userType` must be `Dealer`. |
+| **Constructor** | Token required + `userType` must be `Constructor`. |
+| **ConstrClient** | Token required + `userType` must be `ConstructionClient`. |
 | **Admin** | Token required + `userType` must be `Admin`. |
 
 ---
@@ -139,7 +148,7 @@ Endpoints returning collections use this extended envelope:
 All enums are serialized as **strings** in JSON (e.g., `"Land"`, not `0`).
 
 ### UserType
-`Seller` (default) · `Agent` · `Buyer` · `Company` · `Admin`
+`Seller` (default) · `Agent` · `Buyer` · `Company` · `Admin` · `Dealer` · `Constructor` · `ConstructionClient`
 
 > New users are auto-created as **Seller** on first login. Users can switch to **Agent** via `PUT /users/me` or `POST /auth/login`.
 
@@ -163,6 +172,21 @@ All enums are serialized as **strings** in JSON (e.g., `"Land"`, not `0`).
 
 ### VerificationStatus (Phase 2)
 `Pending` · `Approved` · `Rejected`
+
+### MaterialCategory
+`Cement` · `RodSteel` · `Bricks` · `Sand` · `Tiles` · `StoneChips` · `Paint` · `Plumbing` · `Electrical` · `Wood` · `Glass` · `Others`
+
+### MaterialUnit
+`Bag` · `Kg` · `Piece` · `CubicFt` · `SquareFt` · `Ton` · `Liter` · `Rod` · `Bundle` · `Other`
+
+### ProjectStatus (Phase 2B)
+`Planning` · `InProgress` · `Completed`
+
+### InstallmentStatus (Phase 2B)
+`Pending` · `Paid` · `Overdue`
+
+### CountryCode
+`BD` · `MY`
 
 ---
 
@@ -347,8 +371,8 @@ GET /listings?divisionId=2&districtId=10&minPrice=500000&maxPrice=2000000&sortBy
       "upazilaName": "Cumilla Sadar",
       "upazilaNameBn": "কুমিল্লা সদর",
       "areaName": "Kandirpar",
-      "primaryImageUrl": "https://api.propertymartbd.com/files/listing-images/2026/03/abc123-photo1.jpg",
-      "thumbnailUrl": "https://api.propertymartbd.com/files/listing-images/2026/03/abc123-photo1_thumb.jpg",
+      "primaryImageUrl": "https://api.mypropertymart.com/files/listing-images/2026/03/abc123-photo1.jpg",
+      "thumbnailUrl": "https://api.mypropertymart.com/files/listing-images/2026/03/abc123-photo1_thumb.jpg",
       "viewCount": 45,
       "createdAt": "2026-03-15T08:00:00Z",
       "isOwner": true,
@@ -422,8 +446,8 @@ GET /listings?divisionId=2&districtId=10&minPrice=500000&maxPrice=2000000&sortBy
     "images": [
       {
         "id": "guid",
-        "imageUrl": "https://api.propertymartbd.com/files/listing-images/2026/03/abc123-photo1.jpg",
-        "thumbnailUrl": "https://api.propertymartbd.com/files/listing-images/2026/03/abc123-photo1_thumb.jpg",
+        "imageUrl": "https://api.mypropertymart.com/files/listing-images/2026/03/abc123-photo1.jpg",
+        "thumbnailUrl": "https://api.mypropertymart.com/files/listing-images/2026/03/abc123-photo1_thumb.jpg",
         "displayOrder": 0,
         "isPrimary": true
       }
@@ -634,7 +658,7 @@ Content-Type: multipart/form-data
   "success": true,
   "data": {
     "filePath": "listing-images/2026/03/abc123-photo1.jpg",
-    "url": "https://api.propertymartbd.com/files/listing-images/2026/03/abc123-photo1.jpg",
+    "url": "https://api.mypropertymart.com/files/listing-images/2026/03/abc123-photo1.jpg",
     "sizeBytes": 245000
   }
 }
@@ -665,7 +689,7 @@ Content-Type: multipart/form-data
   "success": true,
   "data": {
     "id": "image-guid",
-    "imageUrl": "https://api.propertymartbd.com/files/listing-images/2026/03/abc123-photo1.jpg",
+    "imageUrl": "https://api.mypropertymart.com/files/listing-images/2026/03/abc123-photo1.jpg",
     "thumbnailUrl": null,
     "displayOrder": 0,
     "isPrimary": true
@@ -1013,7 +1037,338 @@ Content-Type: multipart/form-data
 
 ---
 
-## 6. Phase 2 — Verification & Company
+## 6. Phase 2A — Materials Marketplace, Wishlist & Malaysia
+
+### 6.1 Materials
+
+---
+
+#### `GET /materials/categories` — List Material Categories
+
+| | |
+|---|---|
+| **Auth** | Public |
+| **Web Pages** | Materials Marketplace |
+| **Mobile Screens** | Materials Marketplace |
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": [
+    { "id": 1, "name": "Cement", "nameBn": "সিমেন্ট", "nameMs": "Simen", "iconUrl": null, "displayOrder": 1 },
+    { "id": 2, "name": "Rod/Steel", "nameBn": "রড/স্টিল", "nameMs": "Rod/Keluli", "iconUrl": null, "displayOrder": 2 }
+  ]
+}
+```
+
+---
+
+#### `GET /materials` — Search / Browse Materials
+
+| | |
+|---|---|
+| **Auth** | Public |
+| **Web Pages** | Materials Marketplace |
+| **Mobile Screens** | Materials Marketplace |
+
+**Query Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `categoryId` | int? | Filter by material category |
+| `minPrice` | decimal? | Minimum price |
+| `maxPrice` | decimal? | Maximum price |
+| `dealerId` | guid? | Filter by dealer |
+| `countryCode` | string? | `BD`, `MY` |
+| `search` | string? | Text search |
+| `sortBy` | string? | `price`, `rating`, `newest` |
+| `sortOrder` | string? | `asc`, `desc` |
+| `page` | int | Page number (default: 1) |
+| `pageSize` | int | Items per page (default: 20, max: 50) |
+
+**Response 200:** Paginated list of material listings with dealer info.
+
+---
+
+#### `POST /materials` — Create Material Price Listing
+
+| | |
+|---|---|
+| **Auth** | Dealer |
+| **Web Pages** | Dealer Dashboard |
+| **Mobile Screens** | Dealer Dashboard |
+
+**Request:**
+```json
+{
+  "categoryId": 1,
+  "itemName": "Crown Cement (50kg bag)",
+  "itemNameBn": "ক্রাউন সিমেন্ট (৫০ কেজি ব্যাগ)",
+  "brand": "Crown",
+  "price": 480,
+  "currency": "BDT",
+  "unit": "Bag",
+  "description": "Premium quality Portland cement"
+}
+```
+
+**Response 201:** Created material listing object.
+
+---
+
+#### `PUT /materials/{id}` — Update Material Price
+
+| | |
+|---|---|
+| **Auth** | Owner (Dealer who created it) |
+| **Web Pages** | Dealer Dashboard |
+| **Mobile Screens** | Dealer Dashboard |
+
+> Price changes are tracked in `material_price_history`.
+
+**Request:** Same fields as create — all optional (partial update). Only send fields you want to change.
+
+**Response 200:** Updated material listing object.
+
+---
+
+#### `GET /materials/{id}/price-history` — Price History
+
+| | |
+|---|---|
+| **Auth** | Public |
+| **Web Pages** | Material Detail |
+| **Mobile Screens** | Material Detail |
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": [
+    { "oldPrice": 450, "newPrice": 480, "changedAt": "2026-03-15T10:00:00Z" },
+    { "oldPrice": 420, "newPrice": 450, "changedAt": "2026-02-10T08:00:00Z" }
+  ]
+}
+```
+
+---
+
+#### `GET /materials/compare` — Compare Prices Across Dealers
+
+| | |
+|---|---|
+| **Auth** | Public |
+| **Web Pages** | Materials Marketplace |
+| **Mobile Screens** | Materials Marketplace |
+
+**Query Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `categoryId` | int? | Filter by category |
+| `itemName` | string? | Item name to compare |
+| `countryCode` | string? | `BD`, `MY` |
+
+**Response 200:** List of same/similar items from different dealers, sorted by price.
+
+---
+
+#### `POST /materials/calculator` — Construction Cost Calculator
+
+| | |
+|---|---|
+| **Auth** | Public |
+| **Web Pages** | Cost Calculator |
+| **Mobile Screens** | Cost Calculator |
+
+**Request:**
+```json
+{
+  "items": [
+    { "materialListingId": "guid", "quantity": 100, "unitPrice": 480 },
+    { "materialListingId": "guid", "quantity": 500, "unitPrice": 85 },
+    { "customItem": "Labor Cost", "amount": 500000 }
+  ]
+}
+```
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      { "name": "Crown Cement (50kg)", "quantity": 100, "unitPrice": 480, "subtotal": 48000 },
+      { "name": "60 Grade Rod (12mm)", "quantity": 500, "unitPrice": 85, "subtotal": 42500 },
+      { "name": "Labor Cost", "quantity": 1, "unitPrice": 500000, "subtotal": 500000 }
+    ],
+    "totalCost": 590500,
+    "currency": "BDT"
+  }
+}
+```
+
+---
+
+### 6.2 Wishlist
+
+---
+
+#### `GET /wishlist` — Get All Wishlisted Items
+
+| | |
+|---|---|
+| **Auth** | Required |
+| **Web Pages** | Property Wishlist |
+| **Mobile Screens** | Wishlist |
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": {
+    "properties": [ ... ],
+    "materials": [ ... ],
+    "dealers": [ ... ]
+  }
+}
+```
+
+---
+
+#### `POST /wishlist/properties` — Add Property to Wishlist
+
+| | |
+|---|---|
+| **Auth** | Required |
+| **Web Pages** | Listing Detail |
+| **Mobile Screens** | Listing Detail |
+
+**Request:**
+```json
+{
+  "listingId": "guid"
+}
+```
+
+**Response 201:** Confirmation.
+
+---
+
+#### `DELETE /wishlist/properties/{listingId}` — Remove Property from Wishlist
+
+| | |
+|---|---|
+| **Auth** | Required |
+| **Web Pages** | Property Wishlist |
+| **Mobile Screens** | Wishlist |
+
+**Response 204:** No content.
+
+---
+
+#### `POST /wishlist/materials` — Add Material to Wishlist
+
+| | |
+|---|---|
+| **Auth** | Required |
+| **Web Pages** | Material Detail |
+| **Mobile Screens** | Material Detail |
+
+**Request:**
+```json
+{
+  "materialListingId": "guid"
+}
+```
+
+**Response 201:** Confirmation.
+
+---
+
+#### `DELETE /wishlist/materials/{materialListingId}` — Remove Material from Wishlist
+
+| | |
+|---|---|
+| **Auth** | Required |
+| **Web Pages** | Property Wishlist |
+| **Mobile Screens** | Wishlist |
+
+**Response 204:** No content.
+
+---
+
+#### `POST /wishlist/dealers` — Add Dealer to Favorites
+
+| | |
+|---|---|
+| **Auth** | Required |
+| **Web Pages** | Dealer Profile |
+| **Mobile Screens** | Dealer Profile |
+
+**Request:**
+```json
+{
+  "dealerId": "guid"
+}
+```
+
+**Response 201:** Confirmation.
+
+---
+
+#### `DELETE /wishlist/dealers/{dealerId}` — Remove Dealer from Favorites
+
+| | |
+|---|---|
+| **Auth** | Required |
+| **Web Pages** | Property Wishlist |
+| **Mobile Screens** | Wishlist |
+
+**Response 204:** No content.
+
+---
+
+### 6.3 Malaysia Locations
+
+---
+
+#### `GET /locations/malaysia/states` — All Malaysian States
+
+| | |
+|---|---|
+| **Auth** | Public |
+| **Web Pages** | Search (Malaysia), Create Listing (Malaysia) |
+| **Mobile Screens** | Search (Malaysia), Create Listing (Malaysia) |
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": [
+    { "id": 1, "name": "Johor", "nameMs": "Johor" },
+    { "id": 2, "name": "Kedah", "nameMs": "Kedah" },
+    { "id": 3, "name": "Kelantan", "nameMs": "Kelantan" }
+  ]
+}
+```
+
+---
+
+#### `GET /locations/malaysia/states/{stateId}/districts` — Districts in State
+
+| | |
+|---|---|
+| **Auth** | Public |
+| **Web Pages** | Search (Malaysia), Create Listing (Malaysia) |
+| **Mobile Screens** | Search (Malaysia), Create Listing (Malaysia) |
+
+**Response 200:** List of districts in the specified Malaysian state.
+
+---
+
+### 6.4 Verification & Company
 
 > These endpoints will be implemented in Phase 2. Schemas are already present in the database.
 
@@ -1031,14 +1386,371 @@ Content-Type: multipart/form-data
 
 ---
 
-## 7. Phase 3 — Favorites, Alerts & AI
+## 7. Phase 2B — Construction Company Portal
+
+> These endpoints serve `construction.mypropertymart.com`.
+
+---
+
+#### `POST /construction/companies` — Register Construction Company
+
+| | |
+|---|---|
+| **Auth** | Required (user becomes Constructor) |
+| **Web Pages** | Construction Portal |
+| **Mobile Screens** | Construction Portal |
+
+**Request:**
+```json
+{
+  "companyName": "ABC Construction Ltd.",
+  "companyNameBn": "এবিসি কনস্ট্রাকশন লিমিটেড",
+  "phoneNumber": "+8801712345678",
+  "email": "info@abcconstruction.com",
+  "address": "123 Main Road, Cumilla",
+  "tradeLicense": "TRAD-2026-001",
+  "description": "Premier construction company in Cumilla"
+}
+```
+
+**Response 201:** Created construction company object.
+
+---
+
+#### `GET /construction/companies/{id}` — Company Profile
+
+| | |
+|---|---|
+| **Auth** | Public |
+| **Web Pages** | Construction Portal |
+| **Mobile Screens** | Construction Portal |
+
+**Response 200:** Full company profile with details.
+
+---
+
+#### `PUT /construction/companies/{id}` — Update Company
+
+| | |
+|---|---|
+| **Auth** | Owner (Constructor) |
+| **Web Pages** | Construction Portal |
+| **Mobile Screens** | Construction Portal |
+
+**Request:** Same fields as create — all optional (partial update).
+
+**Response 200:** Updated company object.
+
+---
+
+#### `POST /construction/projects` — Create Building Project
+
+| | |
+|---|---|
+| **Auth** | Constructor |
+| **Web Pages** | Construction Portal |
+| **Mobile Screens** | Construction Portal |
+
+**Request:**
+```json
+{
+  "projectName": "Green Heights Residence",
+  "projectNameBn": "গ্রীন হাইটস রেসিডেন্স",
+  "location": "Kandirpar, Cumilla",
+  "totalFloors": 10,
+  "totalUnits": 40,
+  "landAreaSqft": 5000,
+  "description": "Premium 10-story residential building",
+  "startDate": "2026-06-01",
+  "expectedCompletionDate": "2028-06-01"
+}
+```
+
+**Response 201:** Created project object.
+
+---
+
+#### `GET /construction/projects/{id}` — Project Detail
+
+| | |
+|---|---|
+| **Auth** | Required (Constructor or assigned Client) |
+| **Web Pages** | Construction Portal |
+| **Mobile Screens** | Client Portal |
+
+**Response 200:** Full project detail with progress and client summary.
+
+---
+
+#### `PUT /construction/projects/{id}` — Update Project
+
+| | |
+|---|---|
+| **Auth** | Constructor (Owner) |
+| **Web Pages** | Construction Portal |
+| **Mobile Screens** | Construction Portal |
+
+**Request:** Same fields as create — all optional (partial update).
+
+**Response 200:** Updated project object.
+
+---
+
+#### `POST /construction/projects/{id}/clients` — Add Client to Project
+
+| | |
+|---|---|
+| **Auth** | Constructor |
+| **Web Pages** | Construction Portal |
+| **Mobile Screens** | Construction Portal |
+
+**Request:**
+```json
+{
+  "clientName": "Rahim Ahmed",
+  "clientPhone": "+8801812345678",
+  "clientEmail": "rahim@email.com",
+  "unitNumber": "4A",
+  "floorNumber": 4,
+  "unitSizeSqft": 1200,
+  "totalPrice": 6000000,
+  "currency": "BDT",
+  "downPayment": 1500000
+}
+```
+
+**Response 201:** Created client assignment object.
+
+---
+
+#### `GET /construction/projects/{id}/clients` — List Project Clients
+
+| | |
+|---|---|
+| **Auth** | Constructor |
+| **Web Pages** | Construction Portal |
+| **Mobile Screens** | Construction Portal |
+
+**Response 200:** List of clients assigned to the project.
+
+---
+
+#### `POST /construction/projects/{id}/installments` — Set Installment Plan for Client
+
+| | |
+|---|---|
+| **Auth** | Constructor |
+| **Web Pages** | Construction Portal |
+| **Mobile Screens** | Construction Portal |
+
+**Request:**
+```json
+{
+  "clientId": "guid",
+  "installments": [
+    { "installmentNumber": 1, "amount": 300000, "dueDate": "2026-09-01" },
+    { "installmentNumber": 2, "amount": 300000, "dueDate": "2026-12-01" }
+  ]
+}
+```
+
+**Response 201:** Created installment plan.
+
+---
+
+#### `POST /construction/projects/{id}/payments` — Record Payment with Proof
+
+| | |
+|---|---|
+| **Auth** | Constructor or ConstrClient |
+| **Web Pages** | Construction Portal, Client Portal |
+| **Mobile Screens** | Construction Portal, Client Portal |
+
+**Request:**
+```json
+{
+  "installmentId": "guid",
+  "paidDate": "2026-09-05",
+  "paymentProofFilePath": "payment-proofs/guid/receipt.jpg",
+  "notes": "Paid via bKash"
+}
+```
+
+**Response 201:** Payment record with proof URL.
+
+---
+
+#### `GET /construction/clients/me/projects` — Client's Assigned Projects
+
+| | |
+|---|---|
+| **Auth** | ConstrClient |
+| **Web Pages** | Client Portal |
+| **Mobile Screens** | Client Portal |
+
+**Response 200:** List of projects client is assigned to with progress summary.
+
+---
+
+#### `GET /construction/clients/me/payments` — Client's Payment Status
+
+| | |
+|---|---|
+| **Auth** | ConstrClient |
+| **Web Pages** | Client Portal |
+| **Mobile Screens** | Client Portal |
+
+**Response 200:** Installment schedule with paid/pending/overdue status.
+
+---
+
+#### `POST /construction/projects/{id}/progress` — Update Construction Progress
+
+| | |
+|---|---|
+| **Auth** | Constructor |
+| **Web Pages** | Construction Portal |
+| **Mobile Screens** | Construction Portal |
+
+**Request:**
+```json
+{
+  "floorsCompleted": 4,
+  "percentageComplete": 40.5,
+  "daysRemaining": 365,
+  "description": "4th floor casting completed. Starting 5th floor next week.",
+  "descriptionBn": "চতুর্থ তলার ঢালাই সম্পন্ন হয়েছে।",
+  "imageUrl": "progress-images/guid/photo.jpg"
+}
+```
+
+**Response 201:** Created progress entry.
+
+---
+
+#### `GET /construction/projects/{id}/progress` — Progress Dashboard Data
+
+| | |
+|---|---|
+| **Auth** | Required (Constructor or ConstrClient) |
+| **Web Pages** | Construction Portal, Client Portal |
+| **Mobile Screens** | Client Portal |
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": {
+    "project": { "projectName": "Green Heights", "totalFloors": 10, "totalUnits": 40 },
+    "currentProgress": {
+      "floorsCompleted": 4,
+      "percentageComplete": 40.5,
+      "daysRemaining": 365,
+      "lastUpdated": "2026-09-15T10:00:00Z"
+    },
+    "progressHistory": [
+      { "floorsCompleted": 1, "percentageComplete": 10, "description": "Foundation", "createdAt": "2026-04-01T..." },
+      { "floorsCompleted": 2, "percentageComplete": 20, "description": "2nd floor done", "createdAt": "2026-06-01T..." }
+    ],
+    "financeSummary": {
+      "totalClients": 35,
+      "totalCollected": 52500000,
+      "totalPending": 157500000,
+      "overdueCount": 3
+    }
+  }
+}
+```
+
+---
+
+#### `POST /construction/projects/{id}/notices` — Post Notice
+
+| | |
+|---|---|
+| **Auth** | Constructor |
+| **Web Pages** | Construction Portal |
+| **Mobile Screens** | Construction Portal |
+
+**Request:**
+```json
+{
+  "title": "Water Supply Update",
+  "titleBn": "পানি সরবরাহ আপডেট",
+  "titleMs": "Kemaskini Bekalan Air",
+  "content": "Water tank installation on roof completed.",
+  "contentBn": "ছাদে পানির ট্যাংক স্থাপন সম্পন্ন।",
+  "contentMs": "Pemasangan tangki air di bumbung selesai.",
+  "isPinned": false
+}
+```
+
+**Response 201:** Created notice object.
+
+---
+
+#### `GET /construction/projects/{id}/notices` — Notice Board
+
+| | |
+|---|---|
+| **Auth** | Required (Constructor or ConstrClient) |
+| **Web Pages** | Construction Portal, Client Portal |
+| **Mobile Screens** | Client Portal |
+
+**Response 200:** Paginated list of notices, pinned ones first.
+
+---
+
+#### `POST /construction/calculator` — Flat Price / Profit Calculator
+
+| | |
+|---|---|
+| **Auth** | Public (but typically used by Constructors) |
+| **Web Pages** | Construction Portal |
+| **Mobile Screens** | Construction Portal |
+
+**Request:**
+```json
+{
+  "landPrice": 50000000,
+  "landAreaSqft": 5000,
+  "constructionCostPerSqft": 2500,
+  "totalBuildableSqft": 40000,
+  "otherCosts": 5000000,
+  "costBreakdown": [
+    { "item": "Foundation", "cost": 3000000 },
+    { "item": "Structure", "cost": 8000000 },
+    { "item": "Finishing", "cost": 5000000 }
+  ],
+  "sellingPricePerSqft": 5000,
+  "currency": "BDT"
+}
+```
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": {
+    "totalCost": 155000000,
+    "totalSellingPrice": 200000000,
+    "profitAmount": 45000000,
+    "profitMarginPercentage": 29.03,
+    "costPerSqft": 3875,
+    "sellingPricePerSqft": 5000,
+    "currency": "BDT"
+  }
+}
+```
+
+---
+
+## 8. Phase 3 — Alerts & AI
+
+> Favorites have been moved to Phase 2A Wishlist (Section 6.2).
 
 | Method | Endpoint | Auth | Description | Web Page | Mobile Screen |
 |--------|----------|------|-------------|----------|---------------|
-| GET | `/favorites` | Required | Get saved listings | Favorites | Favorites |
-| POST | `/favorites` | Required | Save a listing | Listing Detail | Listing Detail |
-| DELETE | `/favorites/{listingId}` | Required | Remove from favorites | Favorites | Favorites |
-| POST | `/favorites/sync` | Required | Sync local favorites to server | — | (background) |
 | GET | `/search-alerts` | Required | Get saved search alerts | Search Alerts | Search Alerts |
 | POST | `/search-alerts` | Required | Create search alert | Search | Search |
 | DELETE | `/search-alerts/{id}` | Required | Delete search alert | Search Alerts | Search Alerts |
@@ -1048,14 +1760,14 @@ Content-Type: multipart/form-data
 
 ---
 
-## 8. Phase 4 — Monetization & Marketplace
+## 9. Phase 4 — Monetization
+
+> Supplier marketplace has been moved to Phase 2A Materials (Section 6.1).
 
 | Method | Endpoint | Auth | Description | Web Page | Mobile Screen |
 |--------|----------|------|-------------|----------|---------------|
 | POST | `/payments/featured-listing` | Required | Pay for featured listing | Feature Listing | Feature Listing |
 | POST | `/subscriptions` | Required | Subscribe to agent/company plan | Subscription Plans | Subscription Plans |
-| GET | `/suppliers` | Public | Browse suppliers | Supplier Marketplace | Supplier Marketplace |
-| POST | `/suppliers` | Supplier | Register as supplier | Supplier Marketplace | — |
 | GET | `/blogs` | Public | Blog articles list | Blog Listing | Blog |
 | GET | `/blogs/{slug}` | Public | Single blog article | Blog Detail | Blog |
 | POST | `/ai/chat` | Public | AI chatbot | AI Chat | AI Chat |
@@ -1063,7 +1775,7 @@ Content-Type: multipart/form-data
 
 ---
 
-## 9. Endpoint × Screen Matrix
+## 10. Endpoint × Screen Matrix
 
 ### Web Pages (Angular)
 
@@ -1071,7 +1783,7 @@ Content-Type: multipart/form-data
 |----------|---------------|
 | **Home** | `GET /listings`, `GET /locations/divisions` |
 | **Search Results** | `GET /listings`, `GET /locations/*` (all 3) |
-| **Listing Detail** | `GET /listings/{id}`, `POST /ratings`, `POST /reports` |
+| **Listing Detail** | `GET /listings/{id}`, `POST /ratings`, `POST /reports`, `POST /wishlist/properties` |
 | **Create Listing** | `POST /listings`, `POST /uploads`, `POST /listings/{id}/images`, `GET /locations/*` |
 | **Edit Listing** | `PUT /listings/{id}`, `POST /uploads`, `POST /listings/{id}/images`, `DELETE /listings/{id}/images/{imageId}`, `PATCH /listings/{id}/images/reorder`, `GET /locations/*` |
 | **My Listings** | `GET /users/{id}/listings?isOwner=true\|false`, `DELETE /listings/{id}`, `PATCH /listings/{id}/status` |
@@ -1080,6 +1792,13 @@ Content-Type: multipart/form-data
 | **Login** | `POST /auth/login` |
 | **Phone Login** | `POST /auth/phone-login` |
 | **Navbar** | `GET /auth/me` |
+| **Materials Marketplace** | `GET /materials/categories`, `GET /materials`, `GET /materials/{id}/price-history`, `GET /materials/compare` |
+| **Material Detail** | `GET /materials`, `POST /wishlist/materials` |
+| **Dealer Dashboard** | `POST /materials`, `PUT /materials/{id}`, `GET /materials` |
+| **Property Wishlist** | `GET /wishlist`, `POST /wishlist/properties`, `DELETE /wishlist/properties/{id}` |
+| **Cost Calculator** | `POST /materials/calculator` |
+| **Construction Portal** | `POST /construction/companies`, `GET /construction/projects/{id}`, `POST /construction/projects` |
+| **Client Portal** | `GET /construction/clients/me/projects`, `GET /construction/clients/me/payments`, `GET /construction/projects/{id}/progress`, `GET /construction/projects/{id}/notices` |
 
 ### Mobile Screens (Flutter)
 
@@ -1087,7 +1806,7 @@ Content-Type: multipart/form-data
 |---------------|---------------|
 | **Home** | `GET /listings`, `GET /locations/divisions` |
 | **Search** | `GET /listings`, `GET /locations/*` (all 3) |
-| **Listing Detail** | `GET /listings/{id}`, `POST /ratings`, `POST /reports` |
+| **Listing Detail** | `GET /listings/{id}`, `POST /ratings`, `POST /reports`, `POST /wishlist/properties` |
 | **Create Listing** | `POST /listings`, `POST /uploads`, `POST /listings/{id}/images`, `GET /locations/*` |
 | **My Listings** | `GET /users/{id}/listings?isOwner=true\|false`, `DELETE /listings/{id}`, `PATCH /listings/{id}/status` |
 | **Profile (Public)** | `GET /users/{id}`, `GET /users/{id}/listings`, `GET /users/{id}/ratings` |
@@ -1095,14 +1814,24 @@ Content-Type: multipart/form-data
 | **Login** | `POST /auth/login` |
 | **Phone Login** | `POST /auth/phone-login` |
 | **Settings** | `GET /auth/me` |
+| **Materials Marketplace** | `GET /materials/categories`, `GET /materials`, `GET /materials/{id}/price-history`, `GET /materials/compare` |
+| **Material Detail** | `GET /materials`, `POST /wishlist/materials` |
+| **Dealer Dashboard** | `POST /materials`, `PUT /materials/{id}`, `GET /materials` |
+| **Property Wishlist** | `GET /wishlist`, `POST /wishlist/properties`, `DELETE /wishlist/properties/{id}` |
+| **Cost Calculator** | `POST /materials/calculator` |
+| **Construction Portal** | `POST /construction/companies`, `GET /construction/projects/{id}`, `POST /construction/projects` |
+| **Client Portal** | `GET /construction/clients/me/projects`, `GET /construction/clients/me/payments`, `GET /construction/projects/{id}/progress`, `GET /construction/projects/{id}/notices` |
 
 ### Endpoints by Auth Level
 
 | Auth Level | Endpoints |
 |------------|-----------|
-| **Public** | `GET /listings`, `GET /listings/{id}`, `GET /users/{id}`, `GET /users/{id}/listings`, `GET /users/{id}/ratings`, `GET /locations/*`, `POST /ratings` (P1), `POST /reports` |
-| **Required** | `POST /auth/login`, `POST /auth/phone-login`, `POST /auth/link-phone`, `GET /auth/me`, `PUT /users/me`, `POST /uploads`, `POST /listings` |
+| **Public** | `GET /listings`, `GET /listings/{id}`, `GET /users/{id}`, `GET /users/{id}/listings`, `GET /users/{id}/ratings`, `GET /locations/*`, `POST /ratings` (P1), `POST /reports`, `GET /materials/*`, `GET /locations/malaysia/*`, `POST /materials/calculator`, `POST /construction/calculator` |
+| **Required** | `POST /auth/login`, `POST /auth/phone-login`, `POST /auth/link-phone`, `GET /auth/me`, `PUT /users/me`, `POST /uploads`, `POST /listings`, `GET/POST/DELETE /wishlist/*` |
 | **Owner** | `PUT /listings/{id}`, `DELETE /listings/{id}`, `PATCH /listings/{id}/status`, `POST /listings/{id}/images`, `DELETE /listings/{id}/images/{imageId}`, `PATCH /listings/{id}/images/reorder` |
+| **Dealer** | `POST /materials`, `PUT /materials/{id}` |
+| **Constructor** | `POST /construction/*` (company, projects, clients, installments, progress, notices) |
+| **ConstrClient** | `GET /construction/clients/me/*`, payment proof upload |
 
 ---
 

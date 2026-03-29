@@ -1,10 +1,11 @@
-# 🏠 Property Mart BD
+# 🏠 My Property Mart
 ### Mobile API Contract & Screens Plan
 
-**Document Version:** 1.0  
+**Document Version:** 1.1  
 **Created:** March 20, 2026  
+**Last Updated:** March 29, 2026  
 **Audience:** Mobile Developer (Flutter)  
-**Status:** Phase 1 – Implementation Ready
+**Status:** Phase 1 – Complete, Phase 2 – Planning
 
 ---
 
@@ -27,12 +28,12 @@
 | Item | Value |
 |------|-------|
 | **Base URL (dev)** | `http://<vm-ip>:5000/api/v1` |
-| **Base URL (prod)** | `https://api.propertymartbd.com/api/v1` |
+| **Base URL (prod)** | `https://api.mypropertymart.com/api/v1` |
 | **Format** | JSON (camelCase properties) |
 | **Auth** | Firebase ID Token in `Authorization: Bearer <token>` header |
 | **Pagination** | `?page=1&pageSize=20` |
 | **Sorting** | `?sortBy=price&sortOrder=asc` |
-| **Swagger** | `https://api.propertymartbd.com/swagger` |
+| **Swagger** | `https://api.mypropertymart.com/swagger` |
 | **Dates** | ISO 8601 (`2026-03-20T10:00:00Z`) |
 | **Enums** | Strings (e.g., `"Land"`, `"Active"`) |
 
@@ -189,8 +190,8 @@ Response 200:
       "upazilaName": "Cumilla Sadar",
       "upazilaNameBn": "কুমিল্লা সদর",
       "areaName": "Kandirpar",
-      "primaryImageUrl": "https://api.propertymartbd.com/files/listing-images/guid/photo.jpg",
-      "thumbnailUrl": "https://api.propertymartbd.com/files/listing-images/guid/photo_thumb.jpg",
+      "primaryImageUrl": "https://api.mypropertymart.com/files/listing-images/guid/photo.jpg",
+      "thumbnailUrl": "https://api.mypropertymart.com/files/listing-images/guid/photo_thumb.jpg",
       "viewCount": 45,
       "createdAt": "2026-03-15T08:00:00Z",
       "seller": {
@@ -276,7 +277,7 @@ Response: {
   "success": true,
   "data": {
     "filePath": "listing-images/2024/06/abc123-photo1.jpg",
-    "url": "https://api.propertymartbd.com/files/listing-images/2024/06/abc123-photo1.jpg",
+    "url": "https://api.mypropertymart.com/files/listing-images/2024/06/abc123-photo1.jpg",
     "sizeBytes": 245000
   }
 }
@@ -367,7 +368,9 @@ Body: { "listingId": "guid", "reason": "Fake", "comment": "This property doesn't
 
 ## 4. API Endpoints – Phase 2-4
 
-### Phase 2
+### Phase 2A — Core + Materials Marketplace
+
+**Verification & Company:**
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
@@ -379,14 +382,55 @@ Body: { "listingId": "guid", "reason": "Fake", "comment": "This property doesn't
 | POST | `/listings/{id}/video` | Owner | Confirm uploaded video |
 | GET | `/listings/price-suggestion?districtId=10&upazilaId=85` | Public | Price range suggestion |
 
+**Materials Marketplace:**
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/materials/categories` | Public | List material categories |
+| GET | `/materials` | Public | Search/browse materials |
+| POST | `/materials` | Dealer | Create material price listing |
+| PUT | `/materials/{id}` | Owner | Update material price |
+| GET | `/materials/{id}/price-history` | Public | Price history |
+| GET | `/materials/compare` | Public | Compare prices across dealers |
+| POST | `/materials/calculator` | Public | Calculate total construction cost |
+
+**Wishlist:**
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/wishlist` | Required | Get wishlisted properties & materials |
+| POST | `/wishlist/properties` | Required | Add property to wishlist |
+| POST | `/wishlist/materials` | Required | Add material to wishlist |
+| DELETE | `/wishlist/properties/{id}` | Required | Remove property |
+| DELETE | `/wishlist/materials/{id}` | Required | Remove material |
+
+**Malaysia Locations:**
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/locations/malaysia/states` | Public | Malaysian states |
+| GET | `/locations/malaysia/states/{id}/districts` | Public | Malaysian districts |
+
+### Phase 2B — Construction Portal
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/construction/companies` | Constructor | Register company |
+| GET | `/construction/companies/{id}` | Public | Company profile |
+| POST | `/construction/projects` | Constructor | Create project |
+| GET | `/construction/projects/{id}` | Auth | Project detail |
+| GET | `/construction/clients/me/projects` | ConstrClient | Client's projects |
+| GET | `/construction/clients/me/payments` | ConstrClient | Client's payments |
+| POST | `/construction/projects/{id}/progress` | Constructor | Update progress |
+| GET | `/construction/projects/{id}/progress` | Auth | Progress dashboard |
+| POST | `/construction/projects/{id}/notices` | Constructor | Post notice |
+| GET | `/construction/projects/{id}/notices` | Auth | Notice board |
+| POST | `/construction/calculator` | Public | Flat price calculator |
+
 ### Phase 3
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| GET | `/favorites` | Required | Saved listings |
-| POST | `/favorites` | Required | Save a listing |
-| DELETE | `/favorites/{listingId}` | Required | Remove from favorites |
-| POST | `/favorites/sync` | Required | Sync local → server |
 | GET/POST/DELETE | `/search-alerts` | Required | Manage search alerts |
 | POST | `/ai/predict-price` | Public | ML price prediction |
 | POST | `/ai/voice-search` | Public | Speech → search params |
@@ -397,7 +441,6 @@ Body: { "listingId": "guid", "reason": "Fake", "comment": "This property doesn't
 |--------|----------|------|-------------|
 | POST | `/payments/featured-listing` | Required | Pay for featured |
 | POST | `/subscriptions` | Required | Subscribe to plan |
-| GET/POST | `/suppliers` | Public/Supplier | Supplier marketplace |
 | GET | `/blogs` | Public | Blog articles |
 | POST | `/ai/chat` | Public | AI chatbot |
 | GET | `/recommendations` | Required | Personalized listings |
@@ -406,7 +449,7 @@ Body: { "listingId": "guid", "reason": "Fake", "comment": "This property doesn't
 
 ## 5. Mobile Screens Plan – All Phases
 
-### 🟢 Phase 1 — MVP Screens
+### ✅ Phase 1 — MVP Screens (COMPLETE)
 
 | # | Screen | Navigation | Auth | Key UI Elements |
 |---|--------|-----------|------|-----------------|
@@ -422,33 +465,46 @@ Body: { "listingId": "guid", "reason": "Fake", "comment": "This property doesn't
 | 10 | **Phone Login** | From Login screen | Public | Phone input (+880), OTP input (6 digits), countdown timer, resend button |
 | 11 | **Settings** | Tab 5 → gear icon | Public | Language toggle, about, contact, **profile picture dropdown** (Profile, My Listings, Logout) |
 
-### 🟡 Phase 2 — Additional Screens
+### 🟡 Phase 2A — Additional Screens
 
 | # | Screen | Auth | Key UI Elements |
 |---|--------|------|-----------------|
-
 | 12 | **NID Verification** | Required | Camera capture NID front/back, upload progress, status tracker |
-| 13 | **Company Profile** | Public | Company logo, info, listing grid (same as user profile but branded) |
+| 13 | **Company Profile** | Public | Company logo, info, listing grid |
 | 14 | **Video Player** | Public | In listing detail — inline video with controls |
+| 15 | **Materials Marketplace** | Public | Category tabs, material cards with prices, sort/filter, compare prices |
+| 16 | **Material Detail** | Public | Price comparison across dealers, provider list, add to wishlist |
+| 17 | **Dealer Dashboard** | Dealer | Manage material prices, add/edit items |
+| 18 | **Dealer Registration** | Required | Register as material dealer form |
+| 19 | **Property & Materials Wishlist** | Required | Wishlisted properties and materials, price change notifications |
+| 20 | **Construction Cost Calculator** | Public | Select materials, enter quantities, total cost calculation |
+
+### 🟡 Phase 2B — Additional Screens
+
+| # | Screen | Auth | Key UI Elements |
+|---|--------|------|-----------------|
+| 21 | **Construction Portal** | Constructor | Company dashboard — projects list, client overview |
+| 22 | **Project Management** | Constructor | Manage project details, clients, installments |
+| 23 | **Flat Price Calculator** | Constructor | Input costs, calculate per sqft price, profit margin |
+| 24 | **Client Portal** | ConstrClient | Project progress, payment status, notices |
+| 25 | **Client Payments** | ConstrClient | Installment schedule, payment proof upload |
 
 ### 🟠 Phase 3 — Additional Screens
 
 | # | Screen | Auth | Key UI Elements |
 |---|--------|------|-----------------|
-| 15 | **Favorites** | Required | Saved listings grid, swipe to remove |
-| 16 | **Notifications** | Required | Push notification list, tap to navigate |
-| 17 | **Map View** | Public | Full-screen map with markers, cluster pins, tap for preview card |
-| 18 | **Search Alerts** | Required | Saved searches, toggle active/inactive, delete |
+| 26 | **Notifications** | Required | Push notification list |
+| 27 | **Map View** | Public | Full-screen map with markers |
+| 28 | **Search Alerts** | Required | Saved searches, toggle active/inactive |
 
 ### 🔴 Phase 4 — Additional Screens
 
 | # | Screen | Auth | Key UI Elements |
 |---|--------|------|-----------------|
-| 19 | **Feature Listing** | Owner | Select duration, pay via bKash/Nagad |
-| 20 | **Subscription Plans** | Required | Plan comparison cards, payment flow |
-| 21 | **Supplier Marketplace** | Public | Category browsing, supplier cards, contact |
-| 22 | **Blog** | Public | Article cards, full article reader |
-| 23 | **AI Chat** | Public | Chat interface, property Q&A |
+| 29 | **Feature Listing** | Owner | Select duration, pay via bKash/Nagad |
+| 30 | **Subscription Plans** | Required | Plan comparison cards |
+| 31 | **Blog** | Public | Article cards, reader |
+| 32 | **AI Chat** | Public | Chat interface |
 
 ---
 
@@ -482,6 +538,8 @@ My Listings → Edit Listing → Update Photos → Save
 Login → Google Auth → Return to Previous Screen
 ```
 
+> **Note:** The bottom navigation above applies to the main app. Construction Portal and Client Portal may have their own separate navigation when accessed via `construction.mypropertymart.com`.
+
 ---
 
 ## 7. Flutter Project Hints
@@ -504,6 +562,9 @@ Login → Google Auth → Return to Previous Screen
 | `url_launcher` | Open WhatsApp, phone calls |
 | `share_plus` | Share listing via WhatsApp/other apps |
 | `shimmer` | Loading skeleton animations |
+| `fl_chart` | Interactive charts for progress dashboard, finance charts [P2B] |
+| `intl` | Malay/Bengali number/currency formatting |
+| `flutter_html` | Render notice board content |
 
 ### Key Implementation Notes
 
@@ -511,8 +572,11 @@ Login → Google Auth → Return to Previous Screen
 - **Offline favorites (P1):** Use `shared_preferences` to store favorite listing IDs locally
 - **Pull-to-refresh:** On Home and Search screens
 - **Infinite scroll:** Load next page when user scrolls near bottom
-- **Deep linking:** Support `https://propertymartbd.com/listings/{id}` opening directly in app
+- **Deep linking:** Support `https://mypropertymart.com/listings/{id}` opening directly in app
 - **RTL support:** Not needed for Bangla (Bangla is LTR like English)
+- **Multi-language support:** Use Flutter localization for Bangla, English, Bahasa Malay
+- **Language config:** Language shown depends on `IsMalaysia` config from API
+- **Construction portal:** Screens use charts/graphs for progress visualization (`fl_chart`)
 
 ---
 
@@ -580,6 +644,11 @@ await analytics.logEvent(name: 'search', parameters: {
 | `login` | `method` (google/phone) | User logs in |
 | `filter_use` | `filter_type` | Apply search filter |
 | `image_upload` | `count` | Upload listing photos |
+| `material_view` | `material_id`, `category` | View material detail |
+| `material_compare` | `category`, `count` | Compare materials |
+| `wishlist_add` | `type` (property/material), `id` | Add to wishlist |
+| `calculator_use` | `type` (cost/flat_price) | Use calculator |
+| `construction_progress_view` | `project_id` | View project progress |
 
 ---
 
