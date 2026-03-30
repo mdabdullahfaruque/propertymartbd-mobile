@@ -1,9 +1,9 @@
 # 🏠 My Property Mart
 ### Mobile API Contract & Screens Plan
 
-**Document Version:** 1.1  
+**Document Version:** 1.2  
 **Created:** March 20, 2026  
-**Last Updated:** March 29, 2026  
+**Last Updated:** March 30, 2026  
 **Audience:** Mobile Developer (Flutter)  
 **Status:** Phase 1 – Complete, Phase 2 – Planning
 
@@ -85,8 +85,8 @@
 ## 2. Authentication Flow
 
 ```
-1. User taps "Sign in with Google" or "Sign in with Phone"
-2. Firebase SDK handles Google OAuth / Phone OTP → returns Firebase ID Token
+1. User taps "Sign in with Google" or "Sign in with Email/Password"
+2. Firebase SDK handles Google OAuth / Email-Password auth → returns Firebase ID Token
 3. App calls any authenticated endpoint (e.g. GET /api/v1/auth/me)
    Headers: { Authorization: "Bearer <firebase-id-token>" }
 4. API validates token → auto-creates user in DB on first request using Firebase profile (name, email, photo). **Default role: Seller**
@@ -97,9 +97,12 @@
 9. User can also change role via PUT /api/v1/users/me with { "userType": "Agent" }
 ```
 
+> **Auth Note (v1.2):** Phase 1-2 uses **Email/Password + Google Sign-In** only ($0 cost). Phone OTP login is deferred to Phase 2C (construction clients only) and Phase 3+ (public users) due to Firebase SMS costs (~$0.06/SMS to Bangladesh).
+
 ### Flutter Packages
-- `firebase_auth` — Firebase Authentication
+- `firebase_auth` — Firebase Authentication (Email/Password + Google)
 - `google_sign_in` — Google Sign-In
+- Phone OTP packages deferred to Phase 3
 
 ---
 
@@ -136,27 +139,13 @@ Response 200:
 
 ---
 
-**POST** `/auth/phone-login` — Phone OTP Login
-```
-Headers: Authorization: Bearer <firebase-phone-id-token>
-Body: { "userType": "Seller" }  // Optional — updates user type
+#### ~~POST `/auth/phone-login` — Phone OTP Login~~ [Deferred to Phase 3]
 
-Response: Same as /auth/login (same user object)
-```
+> **Moved to Phase 3 (v1.2).** Phone OTP login deferred due to Firebase SMS costs. Same behavior and response as `/auth/login` — Firebase Phone Auth produces the same type of ID token. See Phase 3 endpoints.
 
-> **Note:** User is auto-created on first request. Firebase Phone Auth produces the same type of ID token as Google Auth. The API middleware validates them identically.
+#### ~~POST `/auth/link-phone` — Link Phone to Existing Account~~ [Deferred to Phase 3]
 
-**POST** `/auth/link-phone` — Link Phone to Existing Account (Auth required)
-```
-Headers: Authorization: Bearer <firebase-id-token>
-Body: { "phoneNumber": "+8801712345678" }
-
-Response 200:
-{
-  "success": true,
-  "data": { ...updated user with phoneNumber... }
-}
-```
+> **Moved to Phase 3 (v1.2).** Link phone number to existing Google/Email account. Deferred along with phone auth.
 
 ---
 
@@ -374,12 +363,12 @@ Body: { "listingId": "guid", "reason": "Fake", "comment": "This property doesn't
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| POST | `/verifications` | Required | Submit NID (upload front/back) |
-| GET | `/verifications/me` | Required | Check own verification status |
+| POST | `/verifications` | Required | Submit NID (upload front/back) [P3] |
+| GET | `/verifications/me` | Required | Check own verification status [P3] |
 | POST | `/companies` | Company | Create company profile |
 | GET | `/companies/{id}` | Public | Company profile + listings |
 | PUT | `/companies/{id}` | Owner | Update company |
-| POST | `/listings/{id}/video` | Owner | Confirm uploaded video |
+| POST | `/listings/{id}/video` | Owner | Confirm uploaded video [P2B construction, P3 public] |
 | GET | `/listings/price-suggestion?districtId=10&upazilaId=85` | Public | Price range suggestion |
 
 **Materials Marketplace:**
@@ -431,6 +420,8 @@ Body: { "listingId": "guid", "reason": "Fake", "comment": "This property doesn't
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
+| POST | `/auth/phone-login` | Firebase Phone Token | Phone OTP login [P3] |
+| POST | `/auth/link-phone` | Required | Link phone number to account [P3] |
 | GET/POST/DELETE | `/search-alerts` | Required | Manage search alerts |
 | POST | `/ai/predict-price` | Public | ML price prediction |
 | POST | `/ai/voice-search` | Public | Speech → search params |
@@ -461,9 +452,8 @@ Body: { "listingId": "guid", "reason": "Fake", "comment": "This property doesn't
 | 6 | **My Listings** | Tab 4 | Required | **Two tabs: "As Seller" and "As Agent"** (`?isOwner=true/false`). Cards show `primaryImageUrl`, `thumbnailUrl`, and status badges. Swipe to edit/delete. |
 | 7 | **Profile (Public)** | Tap seller name anywhere | Public | Photo, name, type, verified badge, rating stars, bio, listing grid |
 | 8 | **Edit Profile** | From Profile tab | Required | Name, phone, bio, **user type (Seller/Agent dropdown)**, profile photo |
-| 9 | **Login** | Redirect when auth needed | Public | Google sign-in + Phone OTP options, platform intro |
-| 10 | **Phone Login** | From Login screen | Public | Phone input (+880), OTP input (6 digits), countdown timer, resend button |
-| 11 | **Settings** | Tab 5 → gear icon | Public | Language toggle, about, contact, **profile picture dropdown** (Profile, My Listings, Logout) |
+| 9 | **Login** | Redirect when auth needed | Public | Email/Password form + Google sign-in button, platform intro |
+| 10 | **Settings** | Tab 5 → gear icon | Public | Language toggle, about, contact, **profile picture dropdown** (Profile, My Listings, Logout) |
 
 ### 🟡 Phase 2A — Additional Screens
 
@@ -483,17 +473,18 @@ Body: { "listingId": "guid", "reason": "Fake", "comment": "This property doesn't
 
 | # | Screen | Auth | Key UI Elements |
 |---|--------|------|-----------------|
-| 21 | **Construction Portal** | Constructor | Company dashboard — projects list, client overview |
-| 22 | **Project Management** | Constructor | Manage project details, clients, installments |
-| 23 | **Flat Price Calculator** | Constructor | Input costs, calculate per sqft price, profit margin |
-| 24 | **Client Portal** | ConstrClient | Project progress, payment status, notices |
-| 25 | **Client Payments** | ConstrClient | Installment schedule, payment proof upload |
+| 18 | **Construction Portal** | Constructor | Company dashboard — projects list, client overview |
+| 19 | **Project Management** | Constructor | Manage project details, clients, installments |
+| 20 | **Flat Price Calculator** | Constructor | Input costs, calculate per sqft price, profit margin |
+| 21 | **Client Portal** | ConstrClient | Project progress, payment status, notices |
+| 22 | **Client Payments** | ConstrClient | Installment schedule, payment proof upload |
 
 ### 🟠 Phase 3 — Additional Screens
 
 | # | Screen | Auth | Key UI Elements |
-|---|--------|------|-----------------|
-| 26 | **Notifications** | Required | Push notification list |
+|---|--------|------|-----------------|| 23 | **NID Verification** | Required | Camera capture NID front/back, upload progress, status tracker |
+| 24 | **Phone Login** | Public | Phone input (+880), OTP input (6 digits), countdown timer, resend button |
+| 25 | **Video Player** | Public | In listing detail — inline video with controls || 26 | **Notifications** | Required | Push notification list |
 | 27 | **Map View** | Public | Full-screen map with markers |
 | 28 | **Search Alerts** | Required | Saved searches, toggle active/inactive |
 
@@ -535,7 +526,7 @@ Home → Listing Detail → Seller Profile → Seller's Listings → Another Lis
 Home → Search → Filter → Results → Listing Detail → WhatsApp Contact
 Profile → Edit Profile
 My Listings → Edit Listing → Update Photos → Save
-Login → Google Auth → Return to Previous Screen
+Login → Google Auth / Email Auth → Return to Previous Screen
 ```
 
 > **Note:** The bottom navigation above applies to the main app. Construction Portal and Client Portal may have their own separate navigation when accessed via `construction.mypropertymart.com`.
@@ -548,7 +539,7 @@ Login → Google Auth → Return to Previous Screen
 
 | Package | Purpose |
 |---------|---------|
-| `firebase_auth` | Authentication (Google + Phone OTP) |
+| `firebase_auth` | Authentication (Email/Password + Google; Phone OTP in P3) |
 | `google_sign_in` | Google SSO |
 | `dio` | HTTP client (better than http for interceptors) |
 | `flutter_map` + `latlong2` | OpenStreetMap (free, no API key) |
@@ -641,7 +632,7 @@ await analytics.logEvent(name: 'search', parameters: {
 | `search` | `district`, `price_range`, `size_range` | Execute search |
 | `whatsapp_click` | `listing_id`, `seller_id` | Click WhatsApp contact |
 | `share` | `listing_id`, `method` | Share listing |
-| `login` | `method` (google/phone) | User logs in |
+| `login` | `method` (google/email) | User logs in |
 | `filter_use` | `filter_type` | Apply search filter |
 | `image_upload` | `count` | Upload listing photos |
 | `material_view` | `material_id`, `category` | View material detail |

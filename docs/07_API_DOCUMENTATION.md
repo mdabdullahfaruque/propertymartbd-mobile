@@ -1,9 +1,9 @@
 # 🏠 My Property Mart — API Documentation
 
-**Document Version:** 1.1  
+**Document Version:** 2.0  
 **Created:** March 22, 2026  
-**Last Updated:** March 29, 2026  
-**Status:** Phase 1 – Complete, Phase 2 – Planning  
+**Last Updated:** March 31, 2026  
+**Status:** Phase 1 – Complete, Phase 2A – Complete, Phase 2B – Complete  
 **Source of Truth:** This document is the single reference for all API endpoints. Both `05_WEB_UI_GUIDE.md` (Angular) and `06_MOBILE_API_CONTRACT.md` (Flutter) reference this document.
 
 ---
@@ -24,6 +24,7 @@
   - [5.7 Reports](#57-reports)
 - [6. Phase 2A — Materials Marketplace, Wishlist & Malaysia](#6-phase-2a--materials-marketplace-wishlist--malaysia)
   - [6.1 Materials](#61-materials)
+  - [6.1.1 Material Dealers](#611-material-dealers)
   - [6.2 Wishlist](#62-wishlist)
   - [6.3 Malaysia Locations](#63-malaysia-locations)
   - [6.4 Verification & Company](#64-verification--company)
@@ -118,7 +119,7 @@ Endpoints returning collections use this extended envelope:
 ### Flow
 
 ```
-1. User signs in via Google OAuth or Phone OTP using Firebase SDK
+1. User signs in via Email/Password or Google OAuth using Firebase SDK
 2. Firebase SDK returns an ID Token (auto-refreshes ~every 1 hour)
 3. App sends any request with: Authorization: Bearer <firebase-id-token>
 4. API middleware validates token → auto-creates user in DB on first request (using Firebase profile: name, email, photo)
@@ -126,6 +127,8 @@ Endpoints returning collections use this extended envelope:
 6. On 401 → force token refresh via Firebase SDK, retry
 7. Optionally call POST /api/v1/auth/login with { "userType": "Seller" } to change user type
 ```
+
+> **Auth Note (v1.2):** Phase 1-2 uses **Email/Password + Google Sign-In** only ($0 cost). Phone OTP login deferred to Phase 2C (construction clients) and Phase 3+ (public) due to Firebase SMS costs (~$0.06/SMS to Bangladesh).
 
 ### Auth Levels
 
@@ -170,7 +173,7 @@ All enums are serialized as **strings** in JSON (e.g., `"Land"`, not `0`).
 ### ReportStatus
 `Pending` · `Reviewed` · `ActionTaken` · `Dismissed`
 
-### VerificationStatus (Phase 2)
+### VerificationStatus (Phase 3)
 `Pending` · `Approved` · `Rejected`
 
 ### MaterialCategory
@@ -196,17 +199,17 @@ All enums are serialized as **strings** in JSON (e.g., `"Land"`, not `0`).
 
 ---
 
-#### `POST /auth/login` — Login / Update User Type via Google
+#### `POST /auth/login` — Login / Update User Type
 
 | | |
 |---|---|
-| **Auth** | Required (Firebase Google ID Token) |
+| **Auth** | Required (Firebase ID Token — Email/Password or Google) |
 | **Web Pages** | Login |
 | **Mobile Screens** | Login |
 
 **Request:**
 ```
-Headers: Authorization: Bearer <firebase-google-id-token>
+Headers: Authorization: Bearer <firebase-id-token>
 ```
 ```json
 {
@@ -237,13 +240,15 @@ Headers: Authorization: Bearer <firebase-google-id-token>
 
 ---
 
-#### `POST /auth/phone-login` — Login / Update User Type via Phone OTP
+#### `POST /auth/phone-login` — Login / Update User Type via Phone OTP [Phase 3]
 
 | | |
 |---|---|
 | **Auth** | Required (Firebase Phone ID Token) |
-| **Web Pages** | Phone Login |
-| **Mobile Screens** | Phone Login |
+| **Web Pages** | Phone Login [Phase 3] |
+| **Mobile Screens** | Phone Login [Phase 3] |
+
+> **Deferred to Phase 3 (v1.2).** Phone OTP login deferred due to Firebase SMS costs (~$0.06/SMS to Bangladesh). Same behavior and response as `/auth/login`. Firebase Phone Auth produces the same type of ID token; the API validates them identically. User is auto-created on first request. Phase 2C enables this for construction clients only.
 
 **Request:**
 ```
@@ -254,19 +259,20 @@ Headers: Authorization: Bearer <firebase-phone-id-token>
   "userType": "Seller"
 }
 ```
-> Same behavior and response as `/auth/login`. Firebase Phone Auth produces the same type of ID token; the API validates them identically. User is auto-created on first request.
 
 **Response 200:** Same as `/auth/login`.
 
 ---
 
-#### `POST /auth/link-phone` — Link Phone Number to Account
+#### `POST /auth/link-phone` — Link Phone Number to Account [Phase 3]
 
 | | |
 |---|---|
 | **Auth** | Required |
-| **Web Pages** | Edit Profile |
-| **Mobile Screens** | Edit Profile |
+| **Web Pages** | Edit Profile [Phase 3] |
+| **Mobile Screens** | Edit Profile [Phase 3] |
+
+> **Deferred to Phase 3 (v1.2).** Link phone number to existing Google/Email account. Available when phone auth is enabled in Phase 3.
 
 **Request:**
 ```json
@@ -1091,6 +1097,46 @@ Content-Type: multipart/form-data
 
 ---
 
+#### `GET /materials/{id}` — Get Material Listing Detail
+
+| | |
+|---|---|
+| **Auth** | Public |
+| **Web Pages** | Material Detail |
+| **Mobile Screens** | Material Detail |
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "guid",
+    "categoryId": 1,
+    "categoryName": "Cement",
+    "itemName": "Crown Cement (50kg bag)",
+    "itemNameBn": "ক্রাউন সিমেন্ট (৫০ কেজি ব্যাগ)",
+    "brand": "Crown",
+    "price": 480,
+    "currency": "BDT",
+    "unit": "Bag",
+    "imageUrl": "materials/guid/photo.jpg",
+    "description": "Premium quality Portland cement",
+    "countryCode": "BD",
+    "dealer": {
+      "id": "guid",
+      "shopName": "Rahim Building Materials",
+      "address": "Kandirpar, Cumilla",
+      "phoneNumber": "+8801712345678",
+      "isVerified": false
+    },
+    "createdAt": "2026-03-20T10:00:00Z",
+    "updatedAt": "2026-03-25T10:00:00Z"
+  }
+}
+```
+
+---
+
 #### `POST /materials` — Create Material Price Listing
 
 | | |
@@ -1208,6 +1254,82 @@ Content-Type: multipart/form-data
   }
 }
 ```
+
+---
+
+### 6.1.1 Material Dealers
+
+---
+
+#### `POST /materials/dealers/register` — Register as Material Dealer
+
+| | |
+|---|---|
+| **Auth** | Required (user becomes Dealer) |
+| **Web Pages** | Dealer Registration |
+| **Mobile Screens** | Dealer Registration |
+
+**Request:**
+```json
+{
+  "shopName": "Rahim Building Materials",
+  "shopNameBn": "রহিম বিল্ডিং ম্যাটেরিয়ালস",
+  "phoneNumber": "+8801712345678",
+  "address": "Kandirpar, Cumilla",
+  "addressBn": "কান্দিরপাড়, কুমিল্লা",
+  "countryCode": "BD",
+  "divisionId": 1,
+  "districtId": 5,
+  "upazilaId": 12,
+  "description": "Quality building materials at fair prices"
+}
+```
+
+> **Validation:** `shopName` required (max 200), `phoneNumber` required (max 20), `address` required (max 500), `countryCode` required (`BD` or `MY`). Registration changes user's `userType` to `Dealer`.
+
+**Response 201:** Created dealer profile object.
+
+---
+
+#### `GET /materials/dealers/{id}` — Get Dealer Profile
+
+| | |
+|---|---|
+| **Auth** | Public |
+| **Web Pages** | Dealer Profile |
+| **Mobile Screens** | Dealer Profile |
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "guid",
+    "userId": "guid",
+    "shopName": "Rahim Building Materials",
+    "shopNameBn": "রহিম বিল্ডিং ম্যাটেরিয়ালস",
+    "phoneNumber": "+8801712345678",
+    "address": "Kandirpar, Cumilla",
+    "addressBn": "কান্দিরপাড়, কুমিল্লা",
+    "countryCode": "BD",
+    "isVerified": false,
+    "description": "Quality building materials at fair prices",
+    "createdAt": "2026-03-20T10:00:00Z"
+  }
+}
+```
+
+---
+
+#### `GET /materials/dealers/me` — Get My Dealer Profile
+
+| | |
+|---|---|
+| **Auth** | Dealer |
+| **Web Pages** | Dealer Dashboard |
+| **Mobile Screens** | Dealer Dashboard |
+
+**Response 200:** Same response format as `GET /materials/dealers/{id}`.
 
 ---
 
@@ -1370,19 +1492,108 @@ Content-Type: multipart/form-data
 
 ### 6.4 Verification & Company
 
-> These endpoints will be implemented in Phase 2. Schemas are already present in the database.
+> NID verification endpoints will be implemented in **Phase 3**. Schemas are already present in the database. NID verification moved from Phase 2 to Phase 3 (v1.2).
 
-| Method | Endpoint | Auth | Description | Web Page | Mobile Screen |
-|--------|----------|------|-------------|----------|---------------|
-| POST | `/verifications` | Required | Submit NID (front/back images) | NID Verification | NID Verification |
-| GET | `/verifications/me` | Required | Check own verification status | NID Verification | NID Verification |
-| POST | `/companies` | Company | Create company profile | Create Company | — |
-| GET | `/companies/{id}` | Public | Company profile + listings | Company Profile | Company Profile |
-| PUT | `/companies/{id}` | Owner | Update company profile | Create Company | — |
-| POST | `/listings/{id}/video` | Owner | Attach uploaded video to listing | Edit Listing | Edit Listing |
-| GET | `/listings/price-suggestion` | Public | Price range suggestion for area | Create Listing | Create Listing |
-| GET | `/admin/verifications` | Admin | List pending verifications | Admin Dashboard | — |
-| PATCH | `/admin/verifications/{id}` | Admin | Approve/reject verification | Admin Review | — |
+**Phase 3 — NID Verification (Planned)**
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/verifications` | Required | Submit NID (front/back images) |
+| GET | `/verifications/me` | Required | Check own verification status |
+| GET | `/admin/verifications` | Admin | List pending verifications |
+| PATCH | `/admin/verifications/{id}` | Admin | Approve/reject verification |
+
+---
+
+#### `POST /companies` — Create Company Profile
+
+| | |
+|---|---|
+| **Auth** | Required (user becomes Company) |
+| **Web Pages** | Create Company |
+| **Mobile Screens** | — |
+
+**Request:**
+```json
+{
+  "companyName": "ABC Properties Ltd.",
+  "companyNameBn": "এবিসি প্রপার্টিজ লিমিটেড",
+  "phoneNumber": "+8801712345678",
+  "email": "info@abcproperties.com",
+  "address": "123 Main Road, Dhaka",
+  "logoUrl": null,
+  "website": "https://abcproperties.com",
+  "description": "Trusted property agency in Dhaka"
+}
+```
+
+> **Validation:** `companyName` required (max 200), `phoneNumber` required (max 20), `address` required (max 500). Registration changes user's `userType` to `Company`.
+
+**Response 201:** Created company profile.
+
+---
+
+#### `GET /companies/{id}` — Get Company Profile
+
+| | |
+|---|---|
+| **Auth** | Public |
+| **Web Pages** | Company Profile |
+| **Mobile Screens** | Company Profile |
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "guid",
+    "userId": "guid",
+    "companyName": "ABC Properties Ltd.",
+    "companyNameBn": "এবিসি প্রপার্টিজ লিমিটেড",
+    "phoneNumber": "+8801712345678",
+    "email": "info@abcproperties.com",
+    "address": "123 Main Road, Dhaka",
+    "logoUrl": null,
+    "website": "https://abcproperties.com",
+    "description": "Trusted property agency in Dhaka",
+    "isVerified": false,
+    "createdAt": "2026-03-20T10:00:00Z"
+  }
+}
+```
+
+---
+
+#### `PUT /companies/{id}` — Update Company Profile
+
+| | |
+|---|---|
+| **Auth** | Owner (Company user who created it) |
+| **Web Pages** | Create Company |
+| **Mobile Screens** | — |
+
+**Request:** Same fields as create — all optional (partial update). Only send fields you want to change.
+
+**Response 200:** Updated company profile object.
+
+---
+
+#### `GET /companies/{id}/listings` — Company Property Listings
+
+| | |
+|---|---|
+| **Auth** | Public |
+| **Web Pages** | Company Profile |
+| **Mobile Screens** | Company Profile |
+
+**Query Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `page` | int | Page number (default: 1) |
+| `pageSize` | int | Items per page (default: 20, max: 50) |
+
+**Response 200:** Paginated list of property listings belonging to the company.
 
 ---
 
@@ -1479,6 +1690,18 @@ Content-Type: multipart/form-data
 | **Mobile Screens** | Client Portal |
 
 **Response 200:** Full project detail with progress and client summary.
+
+---
+
+#### `GET /construction/projects` — List My Company's Projects
+
+| | |
+|---|---|
+| **Auth** | Constructor |
+| **Web Pages** | Construction Portal |
+| **Mobile Screens** | Construction Portal |
+
+**Response 200:** List of all projects belonging to the authenticated constructor's company.
 
 ---
 
@@ -1745,12 +1968,14 @@ Content-Type: multipart/form-data
 
 ---
 
-## 8. Phase 3 — Alerts & AI
+## 8. Phase 3 — Alerts, AI & Verification
 
-> Favorites have been moved to Phase 2A Wishlist (Section 6.2).
+> Favorites have been moved to Phase 2A Wishlist (Section 6.2). NID Verification and Phone OTP Auth moved here from Phase 2/Phase 1 respectively (v1.2).
 
 | Method | Endpoint | Auth | Description | Web Page | Mobile Screen |
 |--------|----------|------|-------------|----------|---------------|
+| POST | `/auth/phone-login` | Firebase Phone Token | Phone OTP login [P3] | Phone Login | Phone Login |
+| POST | `/auth/link-phone` | Required | Link phone to account [P3] | Edit Profile | Edit Profile |
 | GET | `/search-alerts` | Required | Get saved search alerts | Search Alerts | Search Alerts |
 | POST | `/search-alerts` | Required | Create search alert | Search | Search |
 | DELETE | `/search-alerts/{id}` | Required | Delete search alert | Search Alerts | Search Alerts |
@@ -1788,16 +2013,21 @@ Content-Type: multipart/form-data
 | **Edit Listing** | `PUT /listings/{id}`, `POST /uploads`, `POST /listings/{id}/images`, `DELETE /listings/{id}/images/{imageId}`, `PATCH /listings/{id}/images/reorder`, `GET /locations/*` |
 | **My Listings** | `GET /users/{id}/listings?isOwner=true\|false`, `DELETE /listings/{id}`, `PATCH /listings/{id}/status` |
 | **User Profile** | `GET /users/{id}`, `GET /users/{id}/listings`, `GET /users/{id}/ratings` |
-| **Edit Profile** | `PUT /users/me`, `POST /auth/link-phone` |
+| **Edit Profile** | `PUT /users/me`, `POST /auth/link-phone` [P3] |
 | **Login** | `POST /auth/login` |
-| **Phone Login** | `POST /auth/phone-login` |
+| **Phone Login [P3]** | `POST /auth/phone-login` [Phase 3] |
 | **Navbar** | `GET /auth/me` |
 | **Materials Marketplace** | `GET /materials/categories`, `GET /materials`, `GET /materials/{id}/price-history`, `GET /materials/compare` |
-| **Material Detail** | `GET /materials`, `POST /wishlist/materials` |
-| **Dealer Dashboard** | `POST /materials`, `PUT /materials/{id}`, `GET /materials` |
-| **Property Wishlist** | `GET /wishlist`, `POST /wishlist/properties`, `DELETE /wishlist/properties/{id}` |
+| **Material Detail** | `GET /materials/{id}`, `GET /materials/{id}/price-history`, `GET /materials/compare`, `POST /wishlist/materials` |
+| **Dealer Registration** | `POST /materials/dealers/register` |
+| **Dealer Dashboard** | `GET /materials/dealers/me`, `POST /materials`, `PUT /materials/{id}`, `GET /materials` |
+| **Property Wishlist** | `GET /wishlist`, `POST/DELETE /wishlist/properties`, `POST/DELETE /wishlist/materials`, `POST/DELETE /wishlist/dealers` |
 | **Cost Calculator** | `POST /materials/calculator` |
-| **Construction Portal** | `POST /construction/companies`, `GET /construction/projects/{id}`, `POST /construction/projects` |
+| **Create Company** | `POST /companies`, `PUT /companies/{id}` |
+| **Company Profile** | `GET /companies/{id}`, `GET /companies/{id}/listings` |
+| **Admin Dashboard** | `GET /materials`, `GET /wishlist` (admin view) |
+| **Construction Portal** | `POST /construction/companies`, `GET /construction/companies/{id}`, `PUT /construction/companies/{id}`, `GET /construction/projects`, `POST /construction/projects`, `GET /construction/projects/{id}`, `PUT /construction/projects/{id}`, `POST /construction/projects/{id}/clients`, `GET /construction/projects/{id}/clients`, `POST /construction/projects/{id}/installments`, `POST /construction/projects/{id}/payments`, `POST /construction/projects/{id}/progress`, `GET /construction/projects/{id}/progress`, `POST /construction/projects/{id}/notices`, `GET /construction/projects/{id}/notices` |
+| **Construction Calculator** | `POST /construction/calculator` |
 | **Client Portal** | `GET /construction/clients/me/projects`, `GET /construction/clients/me/payments`, `GET /construction/projects/{id}/progress`, `GET /construction/projects/{id}/notices` |
 
 ### Mobile Screens (Flutter)
@@ -1810,28 +2040,31 @@ Content-Type: multipart/form-data
 | **Create Listing** | `POST /listings`, `POST /uploads`, `POST /listings/{id}/images`, `GET /locations/*` |
 | **My Listings** | `GET /users/{id}/listings?isOwner=true\|false`, `DELETE /listings/{id}`, `PATCH /listings/{id}/status` |
 | **Profile (Public)** | `GET /users/{id}`, `GET /users/{id}/listings`, `GET /users/{id}/ratings` |
-| **Edit Profile** | `PUT /users/me`, `POST /auth/link-phone` |
+| **Edit Profile** | `PUT /users/me`, `POST /auth/link-phone` [P3] |
 | **Login** | `POST /auth/login` |
-| **Phone Login** | `POST /auth/phone-login` |
+| **Phone Login [P3]** | `POST /auth/phone-login` [Phase 3] |
 | **Settings** | `GET /auth/me` |
 | **Materials Marketplace** | `GET /materials/categories`, `GET /materials`, `GET /materials/{id}/price-history`, `GET /materials/compare` |
-| **Material Detail** | `GET /materials`, `POST /wishlist/materials` |
-| **Dealer Dashboard** | `POST /materials`, `PUT /materials/{id}`, `GET /materials` |
-| **Property Wishlist** | `GET /wishlist`, `POST /wishlist/properties`, `DELETE /wishlist/properties/{id}` |
+| **Material Detail** | `GET /materials/{id}`, `GET /materials/{id}/price-history`, `GET /materials/compare`, `POST /wishlist/materials` |
+| **Dealer Registration** | `POST /materials/dealers/register` |
+| **Dealer Dashboard** | `GET /materials/dealers/me`, `POST /materials`, `PUT /materials/{id}`, `GET /materials` |
+| **Property Wishlist** | `GET /wishlist`, `POST/DELETE /wishlist/properties`, `POST/DELETE /wishlist/materials`, `POST/DELETE /wishlist/dealers` |
 | **Cost Calculator** | `POST /materials/calculator` |
-| **Construction Portal** | `POST /construction/companies`, `GET /construction/projects/{id}`, `POST /construction/projects` |
+| **Company Profile** | `GET /companies/{id}`, `GET /companies/{id}/listings` |
+| **Construction Portal** | `POST /construction/companies`, `GET /construction/companies/{id}`, `PUT /construction/companies/{id}`, `GET /construction/projects`, `POST /construction/projects`, `GET /construction/projects/{id}`, `POST /construction/projects/{id}/clients`, `GET /construction/projects/{id}/clients`, `POST /construction/projects/{id}/installments`, `POST /construction/projects/{id}/payments`, `POST /construction/projects/{id}/progress`, `GET /construction/projects/{id}/progress`, `POST /construction/projects/{id}/notices`, `GET /construction/projects/{id}/notices` |
+| **Construction Calculator** | `POST /construction/calculator` |
 | **Client Portal** | `GET /construction/clients/me/projects`, `GET /construction/clients/me/payments`, `GET /construction/projects/{id}/progress`, `GET /construction/projects/{id}/notices` |
 
 ### Endpoints by Auth Level
 
 | Auth Level | Endpoints |
 |------------|-----------|
-| **Public** | `GET /listings`, `GET /listings/{id}`, `GET /users/{id}`, `GET /users/{id}/listings`, `GET /users/{id}/ratings`, `GET /locations/*`, `POST /ratings` (P1), `POST /reports`, `GET /materials/*`, `GET /locations/malaysia/*`, `POST /materials/calculator`, `POST /construction/calculator` |
-| **Required** | `POST /auth/login`, `POST /auth/phone-login`, `POST /auth/link-phone`, `GET /auth/me`, `PUT /users/me`, `POST /uploads`, `POST /listings`, `GET/POST/DELETE /wishlist/*` |
+| **Public** | `GET /listings`, `GET /listings/{id}`, `GET /users/{id}`, `GET /users/{id}/listings`, `GET /users/{id}/ratings`, `GET /locations/*`, `POST /ratings` (P1), `POST /reports`, `GET /materials/categories`, `GET /materials`, `GET /materials/{id}`, `GET /materials/{id}/price-history`, `GET /materials/compare`, `POST /materials/calculator`, `GET /materials/dealers/{id}`, `GET /companies/{id}`, `GET /companies/{id}/listings`, `GET /locations/malaysia/*`, `GET /construction/companies/{id}`, `POST /construction/calculator` |
+| **Required** | `POST /auth/login`, `POST /auth/phone-login` [P3], `POST /auth/link-phone` [P3], `GET /auth/me`, `PUT /users/me`, `POST /uploads`, `POST /listings`, `GET/POST/DELETE /wishlist/*`, `POST /companies`, `PUT /companies/{id}`, `POST /materials/dealers/register` |
 | **Owner** | `PUT /listings/{id}`, `DELETE /listings/{id}`, `PATCH /listings/{id}/status`, `POST /listings/{id}/images`, `DELETE /listings/{id}/images/{imageId}`, `PATCH /listings/{id}/images/reorder` |
-| **Dealer** | `POST /materials`, `PUT /materials/{id}` |
-| **Constructor** | `POST /construction/*` (company, projects, clients, installments, progress, notices) |
-| **ConstrClient** | `GET /construction/clients/me/*`, payment proof upload |
+| **Dealer** | `POST /materials`, `PUT /materials/{id}`, `GET /materials/dealers/me` |
+| **Constructor** | `POST /construction/companies`, `PUT /construction/companies/{id}`, `GET /construction/projects`, `POST /construction/projects`, `PUT /construction/projects/{id}`, `POST /construction/projects/{id}/clients`, `GET /construction/projects/{id}/clients`, `POST /construction/projects/{id}/installments`, `POST /construction/projects/{id}/payments`, `POST /construction/projects/{id}/progress`, `GET /construction/projects/{id}/progress`, `POST /construction/projects/{id}/notices`, `GET /construction/projects/{id}/notices` |
+| **ConstrClient** | `GET /construction/clients/me/projects`, `GET /construction/clients/me/payments`, `GET /construction/projects/{id}/progress`, `GET /construction/projects/{id}/notices` |
 
 ---
 

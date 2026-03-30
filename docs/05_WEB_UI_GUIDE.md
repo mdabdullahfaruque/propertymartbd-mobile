@@ -1,9 +1,9 @@
 # 🏠 My Property Mart
 ### Web UI Development Guide
 
-**Document Version:** 1.1  
+**Document Version:** 1.2  
 **Created:** March 20, 2026  
-**Last Updated:** March 29, 2026  
+**Last Updated:** March 30, 2026  
 **Audience:** Backend + Web Developer (You)  
 **Status:** Phase 1 – Complete, Phase 2 – Planning
 
@@ -31,9 +31,9 @@
 
 | Repository | Contents | Deployed To | Maintainer |
 |-----------|----------|-------------|------------|
-| `mypropertymart-api` | .NET API + docs | Azure VM | Backend Dev (You) |
-| `mypropertymart-web` | Angular web app | GitHub Pages | Backend Dev (You) |
-| `mypropertymart-mobile` | Flutter app | Play Store / App Store | Mobile Dev |
+| `propertymart` | .NET API + docs | Azure VM | Backend Dev (You) |
+| `propertymart-web` | Angular web app | GitHub Pages | Backend Dev (You) |
+| `propertymart-mobile` | Flutter app | Play Store / App Store | Mobile Dev |
 
 **Why 3 repos instead of monorepo:**
 - GitHub Pages deploys cleanly from its own repo (`gh-pages` branch)
@@ -45,8 +45,8 @@
 
 | Repository | Contents | Notes |
 |-----------|----------|-------|
-| `mypropertymart` | .NET API + Angular web + docs | Use GitHub Actions to deploy web subfolder to `gh-pages` branch |
-| `mypropertymart-mobile` | Flutter app | Mobile dev's repo |
+| `propertymart` | .NET API + Angular web + docs | Use GitHub Actions to deploy web subfolder to `gh-pages` branch |
+| `propertymart-mobile` | Flutter app | Mobile dev's repo |
 
 Both work well. Choose 3 repos for cleaner separation, 2 repos for convenience.
 
@@ -60,8 +60,8 @@ Keep all `docs/` (01-06 markdown files) in the API repo. The mobile dev referenc
 
 ```bash
 # Create Angular project
-ng new mypropertymart-web --routing --style=scss --ssr=false
-cd mypropertymart-web
+ng new propertymart-web --routing --style=scss --ssr=false
+cd propertymart-web
 
 # Install dependencies
 npm install leaflet @types/leaflet                      # OpenStreetMap
@@ -81,53 +81,59 @@ export const environment = {
   production: false,
   apiBaseUrl: 'https://localhost:5001/api/v1',
   firebase: {
-    apiKey: 'AIzaSyB6RQG1l92K6bLj8cec-XzPH5w0n4ARTbQ',
-    authDomain: 'propertymartbd-8ab7c.firebaseapp.com',
-    projectId: 'propertymartbd-8ab7c',
-    storageBucket: 'propertymartbd-8ab7c.firebasestorage.app',
-    messagingSenderId: '1028971662568',
-    appId: '1:1028971662568:web:b0c8ede732ffe0432c8d5d'
+    apiKey: 'AIzaSyBBwBfQIP2ZasJw74hMn28SFvTy3nBcEbA',
+    authDomain: 'propertymart-7a276.firebaseapp.com',
+    projectId: 'propertymart-7a276',
+    storageBucket: 'propertymart-7a276.firebasestorage.app',
+    messagingSenderId: '724146671098',
+    appId: '1:724146671098:web:f707cf2e26199fd17ca843'
   },
   googleAnalytics: {
-    measurementId: ''  // Empty in dev — no tracking locally
+    measurementId: 'G-SEJK0HV54Z'
   }
 };
 
 // src/environments/environment.prod.ts  (production - Bangladesh)
 export const environment = {
   production: true,
-  apiBaseUrl: 'https://api.mypropertymart.com/api/v1',
+  apiBaseUrl: 'https://api.PropertyMart.com/api/v1',
   isMalaysia: false,
   countryCode: 'BD',
   defaultLanguage: 'bn',
   supportedLanguages: ['bn', 'en'],
   firebase: {
-    apiKey: 'AIzaSyB6RQG1l92K6bLj8cec-XzPH5w0n4ARTbQ',
-    authDomain: 'propertymartbd-8ab7c.firebaseapp.com',
-    projectId: 'propertymartbd-8ab7c',
-    storageBucket: 'propertymartbd-8ab7c.firebasestorage.app',
-    messagingSenderId: '1028971662568',
-    appId: '1:1028971662568:web:b0c8ede732ffe0432c8d5d',
-    measurementId: 'G-BEBVW1YC5C'
+    apiKey: 'AIzaSyBBwBfQIP2ZasJw74hMn28SFvTy3nBcEbA',
+    authDomain: 'propertymart-7a276.firebaseapp.com',
+    projectId: 'propertymart-7a276',
+    storageBucket: 'propertymart-7a276.firebasestorage.app',
+    messagingSenderId: '724146671098',
+    appId: '1:724146671098:web:f707cf2e26199fd17ca843',
+    measurementId: 'G-SEJK0HV54Z'
   },
   googleAnalytics: {
-    measurementId: 'G-BEBVW1YC5C'
+    measurementId: 'G-SEJK0HV54Z'
   }
 };
 
 // src/environments/environment.my.ts (production - Malaysia)
 export const environment = {
   production: true,
-  apiBaseUrl: 'https://api.mypropertymart.com/api/v1',   // or separate MY API URL
+  apiBaseUrl: 'https://api.PropertyMart.com/api/v1',   // or separate MY API URL
   isMalaysia: true,
   countryCode: 'MY',
   defaultLanguage: 'en',
   supportedLanguages: ['en', 'ms'],
   firebase: {
-    // ... same firebase config
+    apiKey: 'AIzaSyBBwBfQIP2ZasJw74hMn28SFvTy3nBcEbA',
+    authDomain: 'propertymart-7a276.firebaseapp.com',
+    projectId: 'propertymart-7a276',
+    storageBucket: 'propertymart-7a276.firebasestorage.app',
+    messagingSenderId: '724146671098',
+    appId: '1:724146671098:web:f707cf2e26199fd17ca843',
+    measurementId: 'G-SEJK0HV54Z'
   },
   googleAnalytics: {
-    measurementId: 'G-BEBVW1YC5C'   // or separate MY measurement
+    measurementId: 'G-SEJK0HV54Z'
   }
 };
 ```
@@ -169,7 +175,7 @@ src/
 │   │   ├── edit-profile/                   # Edit own profile
 │   │   ├── auth/                           # Login page
 │   │   ├── company/                        # [P2A] Company profile
-│   │   ├── verification/                   # [P2A] NID verification
+│   │   ├── verification/                   # [P3] NID verification
 │   │   ├── admin/                          # [P2A] Admin dashboard
 │   │   ├── materials/                      # [P2A] Construction materials marketplace
 │   │   ├── materials-dealer/               # [P2A] Dealer dashboard
@@ -227,8 +233,8 @@ src/
 | 6 | **My Listings** | `/my-listings` | Required | Two tabs: **"As Seller"** (`?isOwner=true`) and **"As Agent"** (`?isOwner=false`). Listing cards with status badges, view counts, edit/delete actions |
 | 7 | **User Profile** | `/users/:id` | Public | Photo, name, user type, verified badge, average rating, bio, listing history |
 | 8 | **Edit Profile** | `/profile/edit` | Required | Edit name, phone, bio, **user type (Seller/Agent dropdown)** form |
-| 9 | **Login** | `/login` | Public | Google sign-in + Phone OTP options, brief platform intro |
-| 10 | **Phone Login** | `/login/phone` | Public | Phone number input (+880), OTP verification (6 digits), countdown timer |
+| 9 | **Login** | `/login` | Public | Email/Password sign-in + Google sign-in, brief platform intro |
+| 10 | **Register** | `/register` | Public | Email + Password registration form, Google sign-up option |
 | 11 | **About** | `/about` | Public | Platform info, contact, FAQ |
 | 12 | **404 / Error** | `**` | Public | Not found page with search redirect |
 
@@ -236,45 +242,46 @@ src/
 
 | # | Page | Route | Auth | Description |
 |---|------|-------|------|-------------|
-| 13 | **NID Verification** | `/verification` | Required | Upload NID front/back, status tracking |
-| 14 | **Company Profile** | `/companies/:id` | Public | Company logo, info, all company listings |
-| 15 | **Create Company** | `/companies/new` | Company | Company registration form |
-| 16 | **Admin Dashboard** | `/admin` | Admin | Pending verifications, reported listings, platform stats |
-| 17 | **Admin Verification Review** | `/admin/verifications/:id` | Admin | Review NID images, approve/reject |
-| 18 | **Materials Marketplace** | `/materials` | Public | Browse construction materials, filter by category, compare prices, sort by price/dealer/location |
-| 19 | **Material Detail** | `/materials/:id` | Public | Material item detail, price comparison across dealers, dealers providing this material |
-| 20 | **Dealer Dashboard** | `/dealer/dashboard` | Dealer | Manage material prices, add/edit items, view analytics |
-| 21 | **Dealer Registration** | `/dealer/register` | Required | Register as construction material dealer |
-| 22 | **Property Wishlist** | `/wishlist` | Required | Wishlisted properties and materials, price change alerts |
-| 23 | **Construction Cost Calculator** | `/calculator` | Public | Select materials, enter quantities, calculate total construction cost |
+| 13 | **Company Profile** | `/companies/:id` | Public | Company logo, info, all company listings |
+| 14 | **Create Company** | `/companies/new` | Company | Company registration form |
+| 15 | **Admin Dashboard** | `/admin` | Admin | Reported listings, platform stats |
+| 16 | **Materials Marketplace** | `/materials` | Public | Browse construction materials, filter by category, compare prices, sort by price/dealer/location |
+| 17 | **Material Detail** | `/materials/:id` | Public | Material item detail, price comparison across dealers, dealers providing this material |
+| 18 | **Dealer Dashboard** | `/dealer/dashboard` | Dealer | Manage material prices, add/edit items, view analytics |
+| 19 | **Dealer Registration** | `/dealer/register` | Required | Register as construction material dealer |
+| 20 | **Property Wishlist** | `/wishlist` | Required | Wishlisted properties and materials, price change alerts |
+| 21 | **Construction Cost Calculator** | `/calculator` | Public | Select materials, enter quantities, calculate total construction cost |
 
-### 🟠 Phase 2B — Additional Pages
+### 🟠 Phase 2B — Construction Portal Pages
 
 | # | Page | Route | Auth | Description |
 |---|------|-------|------|-------------|
-| 24 | **Construction Portal Dashboard** | `/construction` | Constructor | Company admin panel — projects, clients overview |
-| 25 | **Construction Project** | `/construction/projects/:id` | Constructor | Project details, manage clients, progress, notices |
-| 26 | **Flat Price Calculator** | `/construction/calculator` | Constructor | Calculate per sqft price, try different values, profit margin analysis |
-| 27 | **Client Portal** | `/client` | ConstrClient | Client dashboard — project progress, payments, installments, notices |
-| 28 | **Client Payment Detail** | `/client/payments` | ConstrClient | Payment history, installment schedule, payment proof upload |
+| 22 | **Construction Portal Dashboard** | `/construction` | Constructor | Company admin panel — projects, clients overview |
+| 23 | **Construction Project** | `/construction/projects/:id` | Constructor | Project details, manage clients, progress, notices, video upload (compressed) |
+| 24 | **Flat Price Calculator** | `/construction/calculator` | Constructor | Calculate per sqft price, try different values, profit margin analysis |
+| 25 | **Client Portal** | `/client` | ConstrClient | Client dashboard — project progress, payments, installments, notices |
+| 26 | **Client Payment Detail** | `/client/payments` | ConstrClient | Payment history, installment schedule, payment proof upload |
 
 ### 🟠 Phase 3 — Additional Pages
 
 | # | Page | Route | Auth | Description |
 |---|------|-------|------|-------------|
-| 29 | **Search Alerts** | `/alerts` | Required | Manage saved search alerts |
-| 30 | **Map View** | `/search/map` | Public | Full-screen map with listing markers |
-| 31 | **Notifications** | `/notifications` | Required | Notification center |
+| 27 | **Phone Login** | `/login/phone` | Public | Phone number input (+880), OTP verification (6 digits), countdown timer |
+| 28 | **NID Verification** | `/verification` | Required | Upload NID front/back, status tracking |
+| 29 | **Admin Verification Review** | `/admin/verifications/:id` | Admin | Review NID images, approve/reject |
+| 30 | **Search Alerts** | `/alerts` | Required | Manage saved search alerts |
+| 31 | **Map View** | `/search/map` | Public | Full-screen map with listing markers |
+| 32 | **Notifications** | `/notifications` | Required | Notification center |
 
 ### 🔴 Phase 4 — Additional Pages
 
 | # | Page | Route | Auth | Description |
 |---|------|-------|------|-------------|
-| 32 | **Feature Listing** | `/listings/:id/feature` | Owner | Purchase featured placement |
-| 33 | **Subscription Plans** | `/subscriptions` | Required | Agent/Company plan selection |
-| 34 | **Blog Listing** | `/blog` | Public | Property guides, market reports |
-| 35 | **Blog Detail** | `/blog/:slug` | Public | Full blog article |
-| 36 | **AI Chat** | `/chat` | Public | AI property assistant |
+| 33 | **Feature Listing** | `/listings/:id/feature` | Owner | Purchase featured placement |
+| 34 | **Subscription Plans** | `/subscriptions` | Required | Agent/Company plan selection |
+| 35 | **Blog Listing** | `/blog` | Public | Property guides, market reports |
+| 36 | **Blog Detail** | `/blog/:slug` | Public | Full blog article |
+| 37 | **AI Chat** | `/chat` | Public | AI property assistant |
 
 ---
 
@@ -293,11 +300,10 @@ export const routes: Routes = [
   { path: 'users/:id', loadComponent: () => import('./features/profile/profile.component') },
   { path: 'profile/edit', loadComponent: () => import('./features/edit-profile/edit-profile.component'), canActivate: [authGuard] },
   { path: 'login', loadComponent: () => import('./features/auth/login.component') },
-  { path: 'login/phone', loadComponent: () => import('./features/auth/phone-login.component') },
+  { path: 'register', loadComponent: () => import('./features/auth/register.component') },
   { path: 'about', loadComponent: () => import('./features/about/about.component') },
 
   // Phase 2A (lazy loaded when built)
-  { path: 'verification', loadComponent: () => import('./features/verification/verification.component'), canActivate: [authGuard] },
   { path: 'companies/:id', loadComponent: () => import('./features/company/company.component') },
   { path: 'companies/new', loadComponent: () => import('./features/company/create-company.component'), canActivate: [authGuard] },
   { path: 'admin', loadChildren: () => import('./features/admin/admin.routes'), canActivate: [adminGuard] },
@@ -312,6 +318,8 @@ export const routes: Routes = [
   { path: 'client', loadChildren: () => import('./features/construction-client/client.routes'), canActivate: [authGuard] },
 
   // Phase 3
+  { path: 'login/phone', loadComponent: () => import('./features/auth/phone-login.component') },
+  { path: 'verification', loadComponent: () => import('./features/verification/verification.component'), canActivate: [authGuard] },
   { path: 'alerts', loadComponent: () => import('./features/search-alerts/search-alerts.component'), canActivate: [authGuard] },
   { path: 'search/map', loadComponent: () => import('./features/map-view/map-view.component') },
 
@@ -541,7 +549,7 @@ GitHub Pages doesn't support client-side routing natively. Add a `404.html` that
 
 ```bash
 # In your build output, copy index.html as 404.html
-cp dist/mypropertymart-web/browser/index.html dist/mypropertymart-web/browser/404.html
+cp dist/propertymart-web/browser/index.html dist/propertymart-web/browser/404.html
 ```
 
 Or use the hash location strategy in Angular:
@@ -560,10 +568,10 @@ providers: [
 
 ```bash
 # Build for production
-ng build --configuration production --base-href /mypropertymart-web/
+ng build --configuration production --base-href /propertymart-web/
 
 # Deploy to gh-pages branch
-npx angular-cli-ghpages --dir=dist/mypropertymart-web/browser
+npx angular-cli-ghpages --dir=dist/propertymart-web/browser
 ```
 
 ### With Custom Domain
@@ -573,7 +581,7 @@ npx angular-cli-ghpages --dir=dist/mypropertymart-web/browser
 ng build --configuration production
 
 # Add CNAME file to output
-echo "www.mypropertymart.com" > dist/mypropertymart-web/browser/CNAME
+echo "www.PropertyMart.com" > dist/propertymart-web/browser/CNAME
 ```
 
 ---
@@ -614,7 +622,7 @@ jobs:
         run: npm run build -- --configuration production
 
       - name: Copy 404.html for SPA routing
-        run: cp dist/mypropertymart-web/browser/index.html dist/mypropertymart-web/browser/404.html
+        run: cp dist/propertymart-web/browser/index.html dist/propertymart-web/browser/404.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -622,13 +630,13 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist/mypropertymart-web/browser
+          path: dist/propertymart-web/browser
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
 ```
 
-> **Malaysia Build:** To build for Malaysia deployment, create a separate build configuration (`environment.my.ts`) and deploy to `app.mypropertymart.com`. Use `ng build --configuration my` with an `angular.json` configuration that replaces `environment.ts` with `environment.my.ts`.
+> **Malaysia Build:** To build for Malaysia deployment, create a separate build configuration (`environment.my.ts`) and deploy to `app.PropertyMart.com`. Use `ng build --configuration my` with an `angular.json` configuration that replaces `environment.ts` with `environment.my.ts`.
 
 ### API Deploy (in the API repo)
 
@@ -653,7 +661,7 @@ jobs:
       - run: dotnet restore
       - run: dotnet build --configuration Release --no-restore
       - run: dotnet test --configuration Release --no-build
-      - run: dotnet publish src/MyPropertyMart.API -c Release -o ./publish
+      - run: dotnet publish src/PropertyMart.API -c Release -o ./publish
 
       - name: Deploy to VM via SSH
         uses: appleboy/scp-action@v0.1.7
@@ -662,7 +670,7 @@ jobs:
           username: ${{ secrets.VM_USERNAME }}
           key: ${{ secrets.VM_SSH_KEY }}
           source: "publish/*"
-          target: "/opt/mypropertymart/"
+          target: "/opt/propertymart/"
 
       - name: Restart API
         uses: appleboy/ssh-action@v1.0.3
@@ -670,7 +678,7 @@ jobs:
           host: ${{ secrets.VM_HOST }}
           username: ${{ secrets.VM_USERNAME }}
           key: ${{ secrets.VM_SSH_KEY }}
-          script: sudo systemctl restart mypropertymart-api
+          script: sudo systemctl restart propertymart
 ```
 
 ---
@@ -684,18 +692,18 @@ jobs:
 | API (local) | `https://localhost:5001` |
 | Web (local) | `http://localhost:4200` |
 | API (deployed) | `http://<vm-ip>:5000` or via Cloudflare tunnel |
-| Web (deployed) | `https://<username>.github.io/mypropertymart-web` |
+| Web (deployed) | `https://<username>.github.io/propertymart-web` |
 
 ### Phase 1+: Custom Domain
 
-Purchase `mypropertymart.com` (~$10-15/year from Namecheap or Cloudflare Registrar).
+Purchase `PropertyMart.com` (~$10-15/year from Namecheap or Cloudflare Registrar).
 
 | Service | URL | DNS |
 |---------|-----|-----|
-| **Web** | `www.mypropertymart.com` | CNAME → `<username>.github.io` |
-| **API** | `api.mypropertymart.com` | A record → Azure VM IP |
-| **Malaysia Web** | `app.mypropertymart.com` | A record → VM IP |
-| **Construction Portal** | `construction.mypropertymart.com` | A record → VM IP (P2B) |
+| **Web** | `www.PropertyMart.com` | CNAME → `<username>.github.io` |
+| **API** | `api.PropertyMart.com` | A record → Azure VM IP |
+| **Malaysia Web** | `app.PropertyMart.com` | A record → VM IP |
+| **Construction Portal** | `construction.PropertyMart.com` | A record → VM IP (P2B) |
 
 ### Cloudflare DNS Setup
 
@@ -705,7 +713,7 @@ A       api             <vm-ip>                    Proxied ☁️
 A       app             <vm-ip>                    Proxied ☁️   (Malaysia)
 A       construction    <vm-ip>                    Proxied ☁️   (Phase 2B)
 CNAME   www             <username>.github.io       DNS only
-CNAME   @               www.mypropertymart.com     Proxied ☁️
+CNAME   @               www.PropertyMart.com     Proxied ☁️
 ```
 
 > **Note:** GitHub Pages custom domains require the CNAME to be DNS-only (not Cloudflare proxied) OR you use Cloudflare's "Full" SSL mode. Follow [GitHub's custom domain docs](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site).
@@ -719,6 +727,59 @@ CNAME   @               www.mypropertymart.com     Proxied ☁️
 | Need edge functions / middleware | Move to Cloudflare Pages or Vercel |
 
 For Phase 1-3, GitHub Pages is more than sufficient.
+
+---
+
+## 12. TODO — Pending Implementation Tasks
+
+> Based on review (March 29, 2026). Tracks what's done vs what needs building.
+
+### Phase 1 — Completed ✅
+
+- [x] Angular project setup with routing, SCSS, lazy loading
+- [x] Firebase Auth integration (AngularFire)
+- [x] Login page (Google Sign-In)
+- [x] Listing CRUD pages (create, edit, my-listings)
+- [x] Search results with filters
+- [x] Listing detail page with image gallery
+- [x] User profile view/edit
+- [x] Location selector component (Division → District → Upazila)
+- [x] i18n setup (Bangla + English)
+- [x] Tailwind CSS styling
+
+### Phase 1 — Adjustments Needed ⚠️
+
+| Item | Status | Notes |
+|------|--------|-------|
+| **Login page** | Update | Change from “Google + Phone OTP” to “Email/Password + Google Sign-In” |
+| **Register page** | New | Create `/register` page for Email/Password registration |
+| **Remove Phone Login page** | Move to Phase 3 | `/login/phone` route deferred |
+| **Apartment/Flat fields** in create listing | Missing | Bedrooms, Bathrooms, Floor fields not in form yet |
+
+### Phase 2 — To Build
+
+| Item | Phase | Priority |
+|------|-------|----------|
+| Company Profile pages | 2A | High |
+| Admin Dashboard (reported listings only — no NID review yet) | 2A | High |
+| Materials Marketplace pages | 2A | Medium |
+| Dealer Dashboard | 2A | Medium |
+| Wishlist page | 2A | Medium |
+| Construction Cost Calculator | 2A | Medium |
+| Construction Portal (dashboard, projects, clients) | 2B | High |
+| Client Portal (progress, payments, installments) | 2B | High |
+| Video upload component (construction portal only, with compression) | 2B | Medium |
+
+### Phase 3 — Deferred Features
+
+| Item | Moved From | Notes |
+|------|-----------|-------|
+| **Phone Login page** (`/login/phone`) | Phase 1 | Deferred to avoid SMS costs |
+| **NID Verification page** (`/verification`) | Phase 2A | Deferred to Phase 3 |
+| **Admin Verification Review** (`/admin/verifications/:id`) | Phase 2A | Depends on NID feature |
+| **Video upload for public listings** | Phase 2 | Deferred to Phase 3/4 |
+| **Map View** (`/search/map`) | Phase 3 | On schedule |
+| **Search Alerts** (`/alerts`) | Phase 3 | On schedule |
 
 ---
 
